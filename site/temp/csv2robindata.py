@@ -3,6 +3,7 @@ import csv
 import fnmatch
 import json
 import os
+import random
 
 class Error(Exception): pass
 class InvalidResultError(Error): pass
@@ -53,12 +54,25 @@ def matches(rr):
 			if i < j: yield i, j, s
 			else: yield j, i, 1 - s
 
+def coinflip():
+	return random.choice((True, False))
+
+def cswap(m):
+	return m[1], m[0], 1 - m[2]
+
+@degen(list)
+def colorize(mm):
+	for m in mm:
+		yield cswap(m) if coinflip() else m
+
 if __name__ == "__main__":
+	random.seed()
 	pp = paths()
 	for p in pp:
 		rr = rows(p)
 		nn = names(rr)
 		mm = matches(rr)
+		mm = colorize(mm)
 		data = json.dumps({"players": nn, "matches": mm})
 		po = p + ".json"
 		if os.path.exists(po):
