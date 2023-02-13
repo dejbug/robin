@@ -6,13 +6,14 @@ table > tr > td:nth-child(1) { font-weight: bold; }
 table .matchSelected { background-color: pink !important; }
 table .rowSelected, table .colSelected { background-color: #eee; }
 
+table td[data-side=w] { position: relative; }
 table td[data-side=w]::after {
 	content: "s";
 	color: grey;
 	font-size: 60%;
-	position: relative;
-	left: 1em;
-	top: .7em;
+	position: absolute;
+	left: 3.7em;
+	top: 1.9em;
 }
 
 .crosshatch { background-image: url(crosshatch.svg); }
