@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>robin</title>
+	<link href="global.css" rel="stylesheet">
+</head>
+<body onload="main()">
+<div id="resinfo"></div>
+<div id="tablepane"></div>
+<script src="tools.js"></script>
+<script src="Matches.js"></script>
+<script src="SortedMatches.js"></script>
+<script src="CrossTableHighlighter.js"></script>
+<script src="CrossTable.js"></script>
+<script>
+var data = {
+	players: [[1, "Lasker"], [2, "Steinitz"], [3, "Pillsbury"], [4, "Chigorin"], ],
+	matches: [[1,3,0], [2,4,0], [4,3,0], [1,2,1], [2,3,1], [1,4,.5], ],
+};
+var table = null;
+
+function main()
+{
+	table = new CrossTable("#tablepane");
+	table.update(data.players, data.matches);
+	table.installEvents();
+}
+</script>
+<script src="vendor/jquery-3.6.3.min.js"></script>
+</body>
+</html>

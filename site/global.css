@@ -1,0 +1,33 @@
+table, th, td { border: 1px solid grey; }
+table { border-collapse: collapse; font-size: 10pt; }
+th, td { padding: 5px; min-width: 2em; text-align: center; }
+table > tr > td:nth-child(1) { font-weight: bold; }
+
+table .matchSelected { background-color: pink !important; }
+table .rowSelected, table .colSelected { background-color: #eee; }
+
+.crosshatch { background-image: url(crosshatch.svg); }
+
+#resinfo {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	color: grey;
+	font-size: 2vh;
+}
+
+@media (max-width: 639px) {
+	#resinfo::after { content: "0-640"; }
+}
+@media (min-width: 640px) and (max-width: 799px) {
+	#resinfo::after { content: "640-800"; }
+}
+@media (min-width: 800px) and (max-width: 1023px) {
+	#resinfo::after { content: "800-1024"; }
+}
+@media (min-width: 1024px) and (max-width: 1199px) {
+	#resinfo::after { content: "1024-1200"; }
+}
+@media (min-width: 1200px) {
+	#resinfo::after { content: "1200-max"; }
+}
