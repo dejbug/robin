@@ -6,7 +6,7 @@ table > tr > td:nth-child(1) { font-weight: bold; }
 table .matchSelected { background-color: pink !important; }
 table .rowSelected, table .colSelected { background-color: #eee; }
 
-table td[data-side=w] { position: relative; }
+table td[data-side=w] { position: relative; background-clip: padding-box; }
 table td[data-side=w]::after {
 	content: "s";
 	color: grey;
