@@ -46,7 +46,7 @@ def parseScore(s):
 
 @degen(set, list)
 def matches(rr):
-	nn = list(names(rr))
+	nn = names(rr)
 	for i, r in enumerate(rr[1:], start=1):
 		for j, c in enumerate(r[2:-2], start=1):
 			if i == j: continue
