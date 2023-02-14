@@ -147,15 +147,8 @@ export default class CrossTable
 
 	installEvents()
 	{
-		const table = this;
-		
-		this.pane.on("mousedown", function(e)
+		this.pane.on("mousedown", (e) =>
 		{
-			// console.log(table);
-			// const that = new CrossTable(this);
-			// console.log("TABLE", this.id, table);
-			// console.log(e);
-			
 			e.preventDefault();
 			
 			const cc = getCellCoords(e.target);
@@ -165,23 +158,23 @@ export default class CrossTable
 			if (cc.row == 0)
 			{
 				if (cc.col == 1)
-					table.sortByName(e);
+					this.sortByName(e);
 				else
 				{
-					if (cc.col - 2 == table.count)
-						table.sortByPoints(e);
-					else if (cc.col >= 2 && cc.col - 1 <= table.count)
-						table.onPlayerClicked(e, cc.col - 1, table.getNameCell(cc.col - 1).innerText);
+					if (cc.col - 2 == this.count)
+						this.sortByPoints(e);
+					else if (cc.col >= 2 && cc.col - 1 <= this.count)
+						this.onPlayerClicked(e, cc.col - 1, this.getNameCell(cc.col - 1).innerText);
 				}
 			}
 			else if (cc.row >= 1)
 			{
 				if (cc.col == 0)
-					table.onPlayerClicked(e, cc.row, table.getNameCell(cc.row).innerText);
+					this.onPlayerClicked(e, cc.row, this.getNameCell(cc.row).innerText);
 				else if (cc.col == 1)
-					table.onPlayerClicked(e, cc.row, e.target.innerText);
-				else if (cc.col >= 2 && cc.col - 1 != cc.row && cc.col - 1 <= table.count)
-					table.onScoreClicked(e, cc.row, cc.col - 1, e.target.innerText);
+					this.onPlayerClicked(e, cc.row, e.target.innerText);
+				else if (cc.col >= 2 && cc.col - 1 != cc.row && cc.col - 1 <= this.count)
+					this.onScoreClicked(e, cc.row, cc.col - 1, e.target.innerText);
 			}
 		});
 	}
