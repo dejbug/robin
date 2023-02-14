@@ -1,7 +1,7 @@
 import { getCellCoords, scoreToString } from "./tools.js";
-import CrossTableHighlighter from "./CrossTableHighlighter.js";
+import { CrossTableHighlighter } from "./CrossTableHighlighter.js";
 
-export default class CrossTable
+export class CrossTable
 {
 	constructor(paneId)
 	{

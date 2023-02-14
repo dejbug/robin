@@ -1,6 +1,6 @@
 import { strCmp } from "./tools.js";
 
-export default class SortedMatches
+export class SortedMatches
 {
 	constructor(matches)
 	{

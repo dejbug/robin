@@ -12,15 +12,15 @@
 <script src="vendor/jquery-3.6.3.min.js"></script>
 <script src="data/Blitzturnier-22-09-Tabelle.csv.js"></script>
 <script type="module">
-	import CrossTable from "./CrossTable.js";
+	import { CrossTable } from "./CrossTable.js";
 	let table = new CrossTable("#tablepane");
 	table.update(data.players, data.matches);
 	table.installEvents();
 	
-	import Matches from "./Matches.js";
+	import { Matches } from "./Matches.js";
 	let mm = new Matches(data);
 	
-	import SortedMatches from "./SortedMatches.js";
+	import { SortedMatches } from "./SortedMatches.js";
 	let sm = new SortedMatches(mm);
 	console.log(sm);
 	
