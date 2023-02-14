@@ -5,20 +5,16 @@ export default class CrossTable
 {
 	constructor(paneId)
 	{
-		this.pane = $(paneId);
-		// TODO: Find out the best practice to do this. We want to
-		//	automatically attach to the table pane (by id) and to the
-		//	table contained within it which should be its first child (for now)
-		//	but we need to find out how to query a node, i.e. instead of
-		//	$("<table>") we want something like pane.$("<table>").
-		this.table = this.pane.children(0);
-		// console.log(this.table);
+		this.paneId = paneId;
+		this.table = null;
 		this.count = 0;
 		this.hi = new CrossTableHighlighter(this);
 	}
 
 	create(count)
 	{
+		const suits = ["&spades;", "&clubs;", "&hearts;", "&diams;"];
+
 		this.count = count;
 		this.table = $("<table>");
 		
@@ -40,12 +36,22 @@ export default class CrossTable
 			{
 				let td = $("<td>").text(null);
 				if (j < count && i != j) td.css("cursor", "cell");
-				else td.css("cursor", "not-allowed");
+				else {
+					if (i == j)
+					{
+						td.addClass("crosshatch");
+						// td.css("color", "lightgrey").html(suits[i % suits.length]);
+						// td.html("&middot;");
+						// td.html("&there4;");
+					}
+					td.css("cursor", "not-allowed");
+				}
 				td.appendTo(tr);
 			}
 			
 			tr.appendTo(this.table);
 		}
+		
 	}
 
 	sumRowPoints(row)
@@ -74,18 +80,6 @@ export default class CrossTable
 			// cell.attr("data-pid", p[0]);
 		}
 		
-		// const suits = ["&spades;", "&clubs;", "&hearts;", "&diams;"];
-		
-		for (let i = 0; i < players.length; ++i)
-		{
-			const cell = this.getScoreCell(i + 1, i + 1);
-			// cell.innerHTML = suits[i % suits.length];
-			// cell.innerHTML = "&middot;";
-			// cell.innerHTML = "&lowast;";
-			// cell.innerHTML = "&there4;";
-			$(cell).addClass("crosshatch");
-		}
-		
 		for (let i = 0; i < matches.length; ++i)
 		{
 			const m = matches[i];
@@ -109,19 +103,19 @@ export default class CrossTable
 
 	remove()
 	{
-		$(this.table).remove();
+		if(this.table) $(this.table).remove();
 	}
 
 	attach()
 	{
-		$(this.table).appendTo(this.pane);
+		if(this.table) $(this.table).appendTo(this.paneId);
 	}
 
 	update(players, matches)
 	{
+		this.remove();
 		this.create(players.length);
 		this.fill(players, matches);
-		this.remove();
 		this.attach();
 	}
 
@@ -147,7 +141,7 @@ export default class CrossTable
 
 	installEvents()
 	{
-		this.pane.on("mousedown", (e) =>
+		$(this.paneId).on("mousedown", (e) =>
 		{
 			e.preventDefault();
 			
