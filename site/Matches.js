@@ -67,7 +67,7 @@ export default class Matches
 	{
 		// TODO: Optimize it by reducing to a single loop?
 		const tpa = [];
-		for (pid in this.pd)
+		for (let pid in this.pd)
 			tpa.push([parseInt(pid), this.pd[pid], this.getTotalPointsForPlayer(pid)]);
 		return tpa;
 	}

@@ -1,3 +1,5 @@
+import { strCmp } from "./tools.js";
+
 export default class SortedMatches
 {
 	constructor(matches)

@@ -16,6 +16,15 @@
 	let table = new CrossTable("#tablepane");
 	table.update(data.players, data.matches);
 	table.installEvents();
+	
+	import Matches from "./Matches.js";
+	let mm = new Matches(data);
+	
+	import SortedMatches from "./SortedMatches.js";
+	let sm = new SortedMatches(mm);
+	console.log(sm);
+	
+	sm.dump();
 </script>
 </body>
 </html>
