@@ -14,7 +14,7 @@ export default class CrossTable
 
 	create(count)
 	{
-		const suits = ["&spades;", "&clubs;", "&hearts;", "&diams;"];
+		// const suits = ["&spades;", "&clubs;", "&hearts;", "&diams;"];
 		
 		const cc = {
 			inert : `${this.prefix}celltype-inert`,
@@ -44,7 +44,8 @@ export default class CrossTable
 			{
 				let td = $("<td>").text(null);
 				if (j < count && i != j) td.addClass(cc.cell)
-				else {
+				else
+				{
 					if (i == j)
 					{
 						td.addClass("crosshatch");
@@ -58,20 +59,6 @@ export default class CrossTable
 			
 			tr.appendTo(this.table);
 		}
-	}
-
-	sumRowPoints(row)
-	{
-		if (row < 1 || row > this.count) return null;
-		let points = 0;
-		for (let col = 1; col <= this.count; ++col)
-		{
-			if (row == col) continue;
-			const cell = this.getScoreCell(row, col);
-			const val = parseFloat($(cell).attr("data-res"));
-			points += parseFloat(val);
-		}
-		return points;
 	}
 
 	fill(players, matches)
@@ -117,34 +104,6 @@ export default class CrossTable
 		if(this.table) $(this.table).appendTo(this.paneId);
 	}
 
-	update(players, matches)
-	{
-		this.remove();
-		this.create(players.length);
-		this.fill(players, matches);
-		this.attach();
-	}
-
-	getCell(row, col)
-	{
-		return this.table[0].childNodes[row].childNodes[col];
-	}
-
-	getScoreCell(row, col)
-	{
-		return this.getCell(row, col + 1);
-	}
-
-	getNameCell(row)
-	{
-		return this.getCell(row, 1);
-	}
-
-	getPointsCell(row)
-	{
-		return this.getCell(row, 2 + this.count);
-	}
-
 	installEvents()
 	{
 		$(this.paneId).on("mousedown", (e) =>
@@ -177,6 +136,48 @@ export default class CrossTable
 					this.onScoreClicked(e, cc.row, cc.col - 1, e.target.innerText);
 			}
 		});
+	}
+
+	update(players, matches)
+	{
+		this.remove();
+		this.create(players.length);
+		this.fill(players, matches);
+		this.attach();
+	}
+
+	sumRowPoints(row)
+	{
+		if (row < 1 || row > this.count) return null;
+		let points = 0;
+		for (let col = 1; col <= this.count; ++col)
+		{
+			if (row == col) continue;
+			const cell = this.getScoreCell(row, col);
+			const val = parseFloat($(cell).attr("data-res"));
+			points += parseFloat(val);
+		}
+		return points;
+	}
+
+	getCell(row, col)
+	{
+		return this.table[0].childNodes[row].childNodes[col];
+	}
+
+	getScoreCell(row, col)
+	{
+		return this.getCell(row, col + 1);
+	}
+
+	getNameCell(row)
+	{
+		return this.getCell(row, 1);
+	}
+
+	getPointsCell(row)
+	{
+		return this.getCell(row, 2 + this.count);
 	}
 
 	onPlayerClicked(e, row, text)
