@@ -1,3 +1,5 @@
+export { getCellCoords, strCmp, scoreToString };
+
 function getCellCoords(td)
 {
 	if (td.nodeName != "TD" && td.nodeName != "TH") return null;

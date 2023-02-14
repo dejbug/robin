@@ -1,4 +1,4 @@
-class SortedMatches
+export default class SortedMatches
 {
 	constructor(matches)
 	{

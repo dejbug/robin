@@ -1,4 +1,4 @@
-class CrossTableHighlighter
+export default class CrossTableHighlighter
 {
 	constructor(table)
 	{

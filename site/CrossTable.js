@@ -1,8 +1,7 @@
-// from Matches.js import Matches
-// from SortedMatches.js import SortedMatches
-// from tools.js import getCellCoords, strCmp, scoreToString
+import { getCellCoords, scoreToString } from "./tools.js";
+import CrossTableHighlighter from "./CrossTableHighlighter.js";
 
-class CrossTable
+export default class CrossTable
 {
 	constructor(paneId)
 	{

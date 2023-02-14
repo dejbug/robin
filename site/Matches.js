@@ -2,7 +2,7 @@
 //	that is really what this is: a string table, i.e. a mapping of name-ids to name-strings.
 //	A player is more than a name. A player has e.g. a rating and a sequence of matches.
 
-class Matches
+export default class Matches
 {
 	constructor(json)
 	{
