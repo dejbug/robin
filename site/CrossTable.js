@@ -19,24 +19,23 @@ export default class CrossTable
 		this.table = $("<table>");
 		
 		let tr = $("<tr>");
-		$("<th>").text("#").css("cursor", "not-allowed").appendTo(tr);
-		$("<th>").text("Name").css("cursor", "ns-resize").appendTo(tr);
+		$("<th>").text("#").appendTo(tr);
+		$("<th>").text("Name").appendTo(tr);
 		for (let i = 0; i < count; ++i)
-			$("<th>").text(i + 1).css("cursor", "pointer").appendTo(tr);
-		$("<th>").text("Punkte").css("cursor", "ns-resize").appendTo(tr);
+			$("<th>").text(i + 1).appendTo(tr);
+		$("<th>").text("Punkte").appendTo(tr);
 		tr.appendTo(this.table);
 		
 		for (let i = 0; i < count; ++i)
 		{
 			let tr = $("<tr>");
-			$("<td>").text(i + 1).css("cursor", "pointer").appendTo(tr);
-			$("<td>").text("").css("cursor", "pointer").appendTo(tr);
+			$("<td>").text(i + 1).appendTo(tr);
+			$("<td>").text("").appendTo(tr);
 			
 			for (let j = 0; j < count + 1; ++j)
 			{
 				let td = $("<td>").text(null);
-				if (j < count && i != j) td.css("cursor", "cell");
-				else {
+				if (!(j < count && i != j)) {
 					if (i == j)
 					{
 						td.addClass("crosshatch");
@@ -44,7 +43,6 @@ export default class CrossTable
 						// td.html("&middot;");
 						// td.html("&there4;");
 					}
-					td.css("cursor", "not-allowed");
 				}
 				td.appendTo(tr);
 			}

@@ -6,6 +6,16 @@ table > tr > td:nth-child(1) { font-weight: bold; }
 table .matchSelected { background-color: pink !important; }
 table .rowSelected, table .colSelected { background-color: #eee; }
 
+table > tr:nth-child(1) > th { cursor: pointer; }
+table > tr:nth-child(1) > th:nth-child(1) { cursor: not-allowed; }
+table > tr:nth-child(1) > th:nth-child(2) { cursor: ns-resize; }
+table > tr:nth-child(1) > th:last-child { cursor: ns-resize; }
+table > tr > td:nth-child(1) { cursor: pointer; }
+table > tr > td:nth-child(2) { cursor: pointer; }
+table > tr > td:last-child { cursor: not-allowed; }
+table > tr > td { cursor: cell; }
+table > tr > td.crosshatch { cursor: not-allowed; }
+
 table td[data-side=w] { position: relative; background-clip: padding-box; }
 table td[data-side=w]::after {
 	content: "s";
