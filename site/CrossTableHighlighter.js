@@ -6,9 +6,8 @@ export default class CrossTableHighlighter
 		this.lastMatchHighlight = null;
 		this.lastRowHighlight = null;
 		this.lastColHighlight = null;
-		this.matchHighlightClass = "matchSelected";
-		this.rowHighlightClass = "rowSelected";
-		this.colHighlightClass = "colSelected";
+		this.matchHighlightClass = `${this.table.prefix}highlight-match`;
+		this.playerHighlightClass = `${this.table.prefix}highlight-player`;
 	}
 
 	setMatchHighlight(row_, col_, on=true)
@@ -70,8 +69,8 @@ export default class CrossTableHighlighter
 	{
 		if (row === null) return;
 		const tr = $(this.table.getCell(row, 0)).parent();
-		if (on) tr.addClass(this.rowHighlightClass);
-		else tr.removeClass(this.rowHighlightClass);
+		if (on) tr.addClass(this.playerHighlightClass);
+		else tr.removeClass(this.playerHighlightClass);
 	}
 
 	clearLastRowHighlight()
@@ -102,8 +101,8 @@ export default class CrossTableHighlighter
 		for (let row = 0; row <= this.table.count; ++row)
 		{
 			const td = $(this.table.getCell(row, col));
-			if (on) td.addClass(this.colHighlightClass);
-			else td.removeClass(this.colHighlightClass);
+			if (on) td.addClass(this.playerHighlightClass);
+			else td.removeClass(this.playerHighlightClass);
 		}
 	}
 

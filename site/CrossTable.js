@@ -6,6 +6,7 @@ export default class CrossTable
 	constructor(paneId)
 	{
 		this.paneId = paneId;
+		this.prefix = "data-cc-";
 		this.table = null;
 		this.count = 0;
 		this.hi = new CrossTableHighlighter(this);
@@ -14,28 +15,36 @@ export default class CrossTable
 	create(count)
 	{
 		const suits = ["&spades;", "&clubs;", "&hearts;", "&diams;"];
+		
+		const cc = {
+			inert : `${this.prefix}celltype-inert`,
+			sortable : `${this.prefix}celltype-sortable`,
+			cell : `${this.prefix}celltype-cell`,
+			player : `${this.prefix}celltype-player`,
+		};
 
 		this.count = count;
 		this.table = $("<table>");
 		
 		let tr = $("<tr>");
-		$("<th>").text("#").appendTo(tr);
-		$("<th>").text("Name").appendTo(tr);
+		$("<th>").text("#").addClass(cc.inert).appendTo(tr);
+		$("<th>").text("Name").addClass(cc.sortable).appendTo(tr);
 		for (let i = 0; i < count; ++i)
-			$("<th>").text(i + 1).appendTo(tr);
-		$("<th>").text("Punkte").appendTo(tr);
+			$("<th>").text(i + 1).addClass(cc.player).appendTo(tr);
+		$("<th>").text("Punkte").addClass(cc.sortable).appendTo(tr);
 		tr.appendTo(this.table);
 		
 		for (let i = 0; i < count; ++i)
 		{
 			let tr = $("<tr>");
-			$("<td>").text(i + 1).appendTo(tr);
-			$("<td>").text("").appendTo(tr);
+			$("<td>").text(i + 1).addClass(cc.player).appendTo(tr);
+			$("<td>").text("").addClass(cc.player).appendTo(tr);
 			
 			for (let j = 0; j < count + 1; ++j)
 			{
 				let td = $("<td>").text(null);
-				if (!(j < count && i != j)) {
+				if (j < count && i != j) td.addClass(cc.cell)
+				else {
 					if (i == j)
 					{
 						td.addClass("crosshatch");
@@ -44,12 +53,11 @@ export default class CrossTable
 						// td.html("&there4;");
 					}
 				}
-				td.appendTo(tr);
+				td.addClass(cc.inert).appendTo(tr);
 			}
 			
 			tr.appendTo(this.table);
 		}
-		
 	}
 
 	sumRowPoints(row)

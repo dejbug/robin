@@ -3,18 +3,13 @@ table { border-collapse: collapse; font-size: 10pt; }
 th, td { padding: 5px; min-width: 2em; text-align: center; }
 table > tr > td:nth-child(1) { font-weight: bold; }
 
-table .matchSelected { background-color: pink !important; }
-table .rowSelected, table .colSelected { background-color: #eee; }
+.data-cc-highlight-match { background-color: pink !important; }
+.data-cc-highlight-player { background-color: #eee; }
 
-table > tr:nth-child(1) > th { cursor: pointer; }
-table > tr:nth-child(1) > th:nth-child(1) { cursor: not-allowed; }
-table > tr:nth-child(1) > th:nth-child(2) { cursor: ns-resize; }
-table > tr:nth-child(1) > th:last-child { cursor: ns-resize; }
-table > tr > td:nth-child(1) { cursor: pointer; }
-table > tr > td:nth-child(2) { cursor: pointer; }
-table > tr > td:last-child { cursor: not-allowed; }
-table > tr > td { cursor: cell; }
-table > tr > td.crosshatch { cursor: not-allowed; }
+.data-cc-celltype-inert { cursor: not-allowed; }
+.data-cc-celltype-sortable { cursor: ns-resize; }
+.data-cc-celltype-player { cursor: pointer; }
+.data-cc-celltype-cell { cursor: cell; }
 
 table td[data-side=w] { position: relative; background-clip: padding-box; }
 table td[data-side=w]::after {
