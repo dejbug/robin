@@ -38,7 +38,7 @@ SortedMatches.prototype.sortById = function(reversed=false)
 		const cmp = a[0] - b[0];
 		return reversed ? 1 - cmp : cmp;
 	});
-	for (var i = 0; i < pa.length; ++i)
+	for (let i = 0; i < pa.length; ++i)
 	{
 		const row = i + 1;
 		this.row2pid[row] = pa[i][0];
@@ -55,7 +55,7 @@ SortedMatches.prototype.sortByName = function(reversed=false)
 		const cmp = strCmp(a[1], b[1]);
 		return reversed ? 1 - cmp : cmp;
 	});
-	for (var i = 0; i < pa.length; ++i)
+	for (let i = 0; i < pa.length; ++i)
 	{
 		const row = i + 1;
 		this.row2pid[row] = pa[i][0];
@@ -69,11 +69,11 @@ SortedMatches.prototype.sortByPoints = function(reversed=false)
 	this.pid2row = [];
 	const tpa = this.matches.getTotalPointsArray();
 	tpa.sort(function (a,b) {
-		var cmp = Math.sign(b[2] - a[2]);
+		let cmp = Math.sign(b[2] - a[2]);
 		if (cmp == 0) cmp = strCmp(a[1], b[1]);
 		return reversed ? 1 - cmp : cmp;
 	});
-	for (var i = 0; i < tpa.length; ++i)
+	for (let i = 0; i < tpa.length; ++i)
 	{
 		const row = i + 1;
 		this.row2pid[row] = tpa[i][0];

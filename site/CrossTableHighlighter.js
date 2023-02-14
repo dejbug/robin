@@ -97,7 +97,7 @@ CrossTableHighlighter.prototype.toggleColHighlight = function(col)
 CrossTableHighlighter.prototype.setColHighlight = function(col, on=true)
 {
 	if (col === null) return;
-	for (var row = 0; row <= this.table.count; ++row)
+	for (let row = 0; row <= this.table.count; ++row)
 	{
 		const td = $(this.table.getCell(row, col));
 		if (on) td.addClass(this.colHighlightClass);

@@ -21,23 +21,23 @@ CrossTable.prototype.create = function(count)
 	this.count = count;
 	this.table = $("<table>");
 	
-	var tr = $("<tr>");
+	let tr = $("<tr>");
 	$("<th>").text("#").css("cursor", "not-allowed").appendTo(tr);
 	$("<th>").text("Name").css("cursor", "ns-resize").appendTo(tr);
-	for (var i = 0; i < count; ++i)
+	for (let i = 0; i < count; ++i)
 		$("<th>").text(i + 1).css("cursor", "pointer").appendTo(tr);
 	$("<th>").text("Punkte").css("cursor", "ns-resize").appendTo(tr);
 	tr.appendTo(this.table);
 	
-	for (var i = 0; i < count; ++i)
+	for (let i = 0; i < count; ++i)
 	{
-		var tr = $("<tr>");
+		let tr = $("<tr>");
 		$("<td>").text(i + 1).css("cursor", "pointer").appendTo(tr);
 		$("<td>").text("").css("cursor", "pointer").appendTo(tr);
 		
 		for (j = 0; j < count + 1; ++j)
 		{
-			var td = $("<td>").text(null);
+			let td = $("<td>").text(null);
 			if (j < count && i != j) td.css("cursor", "cell");
 			else td.css("cursor", "not-allowed");
 			td.appendTo(tr);
@@ -50,8 +50,8 @@ CrossTable.prototype.create = function(count)
 CrossTable.prototype.sumRowPoints = function(row)
 {
 	if (row < 1 || row > this.count) return null;
-	var points = 0;
-	for (var col = 1; col <= this.count; ++col)
+	let points = 0;
+	for (let col = 1; col <= this.count; ++col)
 	{
 		if (row == col) continue;
 		const cell = this.getScoreCell(row, col);
@@ -65,7 +65,7 @@ CrossTable.prototype.fill = function(players, matches)
 {
 	// TODO: Error if players.length > this.count ?
 	
-	for (var i = 0; i < players.length; ++i)
+	for (let i = 0; i < players.length; ++i)
 	{
 		const p = players[i];
 		const cell = $(this.getNameCell(i + 1));
@@ -75,7 +75,7 @@ CrossTable.prototype.fill = function(players, matches)
 	
 	// const suits = ["&spades;", "&clubs;", "&hearts;", "&diams;"];
 	
-	for (var i = 0; i < players.length; ++i)
+	for (let i = 0; i < players.length; ++i)
 	{
 		const cell = this.getScoreCell(i + 1, i + 1);
 		// cell.innerHTML = suits[i % suits.length];
@@ -85,7 +85,7 @@ CrossTable.prototype.fill = function(players, matches)
 		$(cell).addClass("crosshatch");
 	}
 	
-	for (var i = 0; i < matches.length; ++i)
+	for (let i = 0; i < matches.length; ++i)
 	{
 		const m = matches[i];
 		const whiteCell = $(this.getScoreCell(m[0], m[1]));
@@ -98,7 +98,7 @@ CrossTable.prototype.fill = function(players, matches)
 		blackCell.attr("data-side", "b");
 	}
 	
-	for (var i = 0; i < players.length; ++i)
+	for (let i = 0; i < players.length; ++i)
 	{
 		const points = this.sumRowPoints(i + 1);
 		const cell = $(this.getPointsCell(i + 1));

@@ -4,10 +4,10 @@
 
 function Matches(json)
 {
-	var json = this.Sanitize(json);
+	json = this.Sanitize(json);
 	this.pa = json.players;	// players array
 	this.pd = [];			// players dict
-	for (var i = 0; i < this.pa.length; ++i)
+	for (let i = 0; i < this.pa.length; ++i)
 	{
 		const p = this.pa[i];
 		this.pd[p[0]] = p[1];
@@ -40,7 +40,7 @@ Matches.prototype.dump = function()
 Matches.prototype.getMatchesForPlayer = function(pid)
 {
 	const xx = [];
-	for (var i = 0; i < this.ma.length; ++i)
+	for (let i = 0; i < this.ma.length; ++i)
 	{
 		const m = this.ma[i];
 		if (m[0] == pid || m[1] == pid)
@@ -51,8 +51,8 @@ Matches.prototype.getMatchesForPlayer = function(pid)
 
 Matches.prototype.getTotalPointsForPlayer = function(pid)
 {
-	var p = 0;
-	for (var i = 0; i < this.ma.length; ++i)
+	let p = 0;
+	for (let i = 0; i < this.ma.length; ++i)
 	{
 		const m = this.ma[i];
 		if (m[0] == pid) p += m[2];
