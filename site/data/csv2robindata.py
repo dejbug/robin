@@ -65,6 +65,18 @@ def colorize(mm):
 	for m in mm:
 		yield cswap(m) if coinflip() else m
 
+def output(data, p, ext=".json", prefix="", suffix=""):
+	po = p + ext
+	data = prefix + data + suffix
+	if os.path.exists(po):
+		print(data)
+		print("! Output file \"%s\" already exists; delete it manually." % po)
+		return False
+	with codecs.open(po, "w", "utf8") as f:
+		f.write(data)
+	print(p, "=>", po)
+	return True
+
 if __name__ == "__main__":
 	random.seed()
 	pp = paths()
@@ -74,11 +86,4 @@ if __name__ == "__main__":
 		mm = matches(rr)
 		mm = colorize(mm)
 		data = json.dumps({"players": nn, "matches": mm})
-		po = p + ".json"
-		if os.path.exists(po):
-			print(data)
-			print("! Output file \"%s\" already exists; delete it manually." % po)
-		else:
-			print(p, "=>", po)
-			with codecs.open(po, "w", "utf8") as f:
-				f.write(data)
+		output(data, p, ".js", "var data = ", ";")
