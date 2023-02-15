@@ -12,6 +12,7 @@ export class SortedMatches
 		this.matches = matches;
 		this.row2pid = null;
 		this.pid2row = null;
+		this.lastSortMode = null;
 		// FIXME: Instead of sorting here, which is expensive,
 		//	it would suffice to simply create an identity map.
 		//	Not only would it suffice but it would match the
@@ -43,8 +44,11 @@ export class SortedMatches
 		console.log("Ir<", this.pid2row);
 	}
 
-	sortById(reversed = false)
+	sortById(reversed = null)
 	{
+		this.lastSortMode = this.lastSortMode == 1 ? -this.lastSortMode : 1;
+		reversed = reversed || this.lastSortMode < 0
+		
 		this.row2pid = [];
 		this.pid2row = [];
 		const pa = this.matches.pa.slice(0);
@@ -62,6 +66,9 @@ export class SortedMatches
 
 	sortByName(reversed = false)
 	{
+		this.lastSortMode = this.lastSortMode == 2 ? -this.lastSortMode : 2;
+		reversed = reversed || this.lastSortMode < 0
+		
 		this.row2pid = [];
 		this.pid2row = [];
 		const pa = this.matches.pa.slice(0);
@@ -79,6 +86,9 @@ export class SortedMatches
 
 	sortByPoints(reversed = false)
 	{
+		this.lastSortMode = this.lastSortMode == 3 ? -this.lastSortMode : 3;
+		reversed = reversed || this.lastSortMode < 0
+		
 		this.row2pid = [];
 		this.pid2row = [];
 		const tpa = this.matches.getTotalPointsArray();

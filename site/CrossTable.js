@@ -26,7 +26,7 @@ export class CrossTable
 			cell : `${this.prefix}celltype-cell`,
 			player : `${this.prefix}celltype-player`,
 		};
-
+		
 		this.count = count;
 		this.table = $("<table>");
 		
@@ -224,8 +224,6 @@ export class CrossTable
 
 	onSortById(e)
 	{
-		// TODO: Repeated clicks should toggle sorting order.
-		
 		console.log("onSortById(e)");
 		if (!this.model) return;
 		this.model.sortById();
@@ -234,8 +232,6 @@ export class CrossTable
 
 	onSortByName(e)
 	{
-		// TODO: Repeated clicks should toggle sorting order.
-		
 		console.log("onSortByName(e)");
 		if (!this.model) return;
 		this.model.sortByName();
@@ -244,8 +240,6 @@ export class CrossTable
 
 	onSortByPoints(e)
 	{
-		// TODO: Repeated clicks should toggle sorting order.
-		
 		console.log("onSortByPoints(e)");
 		if (!this.model) return;
 		this.model.sortByPoints();
