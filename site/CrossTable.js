@@ -117,11 +117,11 @@ export class CrossTable
 			if (cc.row == 0)
 			{
 				if (cc.col == 1)
-					this.sortByName(e);
+					this.onSortByName(e);
 				else
 				{
 					if (cc.col - 2 == this.count)
-						this.sortByPoints(e);
+						this.onSortByPoints(e);
 					else if (cc.col >= 2 && cc.col - 1 <= this.count)
 						this.onPlayerClicked(e, cc.col - 1, this.getNameCell(cc.col - 1).innerText);
 				}
@@ -193,16 +193,16 @@ export class CrossTable
 		this.hi.toggleMatchHighlight(row, col);
 	}
 
-	sortByName(e)
+	onSortByName(e)
 	{
-		console.log("sortByName(e)");
-		// this.sm.sortByName();
+		console.log("onSortByName(e)");
+		// this.sm.onSortByName();
 		// this.sm.dump();
 		// this.update();
 	}
 
-	sortByPoints(e)
+	onSortByPoints(e)
 	{
-		console.log("sortByPoints(e)");
+		console.log("onSortByPoints(e)");
 	}
 }
