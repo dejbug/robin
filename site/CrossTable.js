@@ -17,6 +17,7 @@ export class CrossTable
 			keepLastHighlight : true,
 			keepLastHighlightSorted : true,
 			forceRectangularScoreCells : false,
+			showPidsInsteadOfIndex : false,
 		};
 	}
 
@@ -79,7 +80,8 @@ export class CrossTable
 			const row = pid2row ? pid2row[p[0]] : i + 1;
 			const cell = $(this.getNameCell(row));
 			cell.text(p[1]);
-			// cell.attr("data-pid", p[0]);
+			if (this.opt.showPidsInsteadOfIndex)
+				$(this.getCell(row, 0)).text(p[0]);
 		}
 		
 		for (let i = 0; i < matches.length; ++i)
