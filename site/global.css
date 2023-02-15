@@ -11,8 +11,8 @@ table > tr > td:nth-child(1) { font-weight: bold; }
 .data-cc-celltype-player { cursor: pointer; }
 .data-cc-celltype-cell { cursor: cell; }
 
-table td[data-side=w] { position: relative; background-clip: padding-box; }
-table td[data-side=w]::after {
+table td[data-side=b] { position: relative; background-clip: padding-box; }
+table td[data-side=b]::after {
 	content: "s";
 	color: grey;
 	font-size: 60%;
