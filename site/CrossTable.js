@@ -13,6 +13,7 @@ export class CrossTable
 		this.model = null;
 		this.count = 0;
 		this.hi = new CrossTableHighlighter(this);
+		this.opt = { keepLastHighlight : true, keepLastHighlightSorted : true, }
 	}
 
 	create(count)
@@ -155,7 +156,6 @@ export class CrossTable
 
 	update()
 	{
-		// FIXME: Reset highlighter state.
 		// TODO: Do we need a nicer model API?
 		
 		if (!this.model) return false;
@@ -163,6 +163,8 @@ export class CrossTable
 		this.create(this.model.matches.pa.length);
 		this.fill(this.model.matches.pa, this.model.matches.ma, this.model.pid2row);
 		this.attach();
+		if (this.opt.keepLastHighlight) this.hi.apply(this.opt.keepLastHighlightSorted);
+		else this.hi.reset();
 		return true;
 	}
 
@@ -202,24 +204,24 @@ export class CrossTable
 
 	onPlayerClicked(e, row, text)
 	{
-		// TODO: Print player id, not just row.
+		const pid = this.model.row2pid[row];
+		console.log(`onPlayerClicked(e, ${row} (${pid}), '${text}')`);
 		
-		console.log("onPlayerClicked(e, " + row + ", '" + text + "')");
-		this.hi.toggleRowHighlight(row);
-		this.hi.toggleColHighlight(row + 1);
+		this.hi.togglePlayerHighlight(pid);
 	}
 
 	onScoreClicked(e, row, col, text)
 	{
-		// TODO: Print player id, not just row.
+		const rowpid = this.model.row2pid[row];
+		const colpid = this.model.row2pid[col];
+		console.log(`onScoreClicked(e, ${row} (${rowpid}), ${col} (${colpid}), '${text}')`);
 		
-		console.log("onScoreClicked(e, " + row + ", " + col + ", '" + text + "')");
-		this.hi.toggleMatchHighlight(row, col);
+		this.hi.toggleMatchHighlight(rowpid, colpid);
 	}
 
 	onSortByName(e)
 	{
-		// TODO: Repeated clicks toggle sorting order.
+		// TODO: Repeated clicks should toggle sorting order.
 		
 		console.log("onSortByName(e)");
 		if (!this.model) return;
@@ -229,7 +231,7 @@ export class CrossTable
 
 	onSortByPoints(e)
 	{
-		// TODO: Repeated clicks toggle sorting order.
+		// TODO: Repeated clicks should toggle sorting order.
 		
 		console.log("onSortByPoints(e)");
 		if (!this.model) return;

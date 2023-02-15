@@ -3,101 +3,111 @@ export class CrossTableHighlighter
 	constructor(table)
 	{
 		this.table = table;
-		this.lastMatchHighlight = null;
+		
+		this.cellHighlightClass = `${this.table.prefix}highlight-match`;
+		this.playerHighlightClass = `${this.table.prefix}highlight-player`;
+		
+		this.lastCellHighlight = null;
 		this.lastRowHighlight = null;
 		this.lastColHighlight = null;
-		this.matchHighlightClass = `${this.table.prefix}highlight-match`;
-		this.playerHighlightClass = `${this.table.prefix}highlight-player`;
-	}
-
-	setMatchHighlight(row_, col_, on=true)
-	{
-		const row = Math.min(row_, col_);
-		const col = Math.max(row_, col_);
-		const first = $(this.table.getCell(row, col + 1));
-		if (on) first.addClass(this.matchHighlightClass);
-		else first.removeClass(this.matchHighlightClass);
-		const second = $(this.table.getCell(col, row + 1));
-		if (on) second.addClass(this.matchHighlightClass);
-		else second.removeClass(this.matchHighlightClass);
-	}
-
-	toggleMatchHighlight(row_, col_)
-	{
-		const row = Math.min(row_, col_);
-		const col = Math.max(row_, col_);
-		if (this.lastMatchHighlight !== null)
-		{
-			const lastRow = this.lastMatchHighlight["row"];
-			const lastCol = this.lastMatchHighlight["col"];
-			this.setMatchHighlight(lastRow, lastCol, false);
-			if (lastRow == row && lastCol == col)
-			{
-				this.lastMatchHighlight = null;
-				return;
-			}
-		}
-		this.lastMatchHighlight = {row: row, col: col};
-		this.setMatchHighlight(row, col);
-	}
-
-	clearLastMatchHighlight()
-	{
-		if (this.lastMatchHighlight === null) return;
-		const lastRow = this.lastMatchHighlight["row"];
-		const lastCol = this.lastMatchHighlight["col"];
-		this.setMatchHighlight(lastRow, lastCol, false);
+		
+		this.lastPlayerHighlight = null;
 		this.lastMatchHighlight = null;
 	}
 
-	toggleRowHighlight(row)
+	setPlayerHighlight(pid, on = true)
 	{
-		if (this.lastRowHighlight !== null)
+		this.lastPlayerHighlight = on ? pid : null;
+		
+		const row = this.table.model.pid2row[pid];
+		const col = row + 1;
+		
+		this.setRowHighlight(row, on);
+		this.setColHighlight(col, on);
+	}
+
+	setMatchHighlight(pid1, pid2, on = true)
+	{
+		[ pid1, pid2 ] = [ Math.min(pid1, pid2), Math.max(pid1, pid2) ];
+		this.lastMatchHighlight = on ? { pid1, pid2 } : null;
+		
+		const row = this.table.model.pid2row[pid1];
+		const col = this.table.model.pid2row[pid2];
+		this.setCellHighlight(row, col, on);
+	}
+
+	togglePlayerHighlight(pid)
+	{
+		if (this.lastPlayerHighlight !== null)
 		{
-			this.setRowHighlight(this.lastRowHighlight, false);
-			if (this.lastRowHighlight == row)
+			// We need this because setPlayerHighlight modifies this.lastPlayerHighlight.
+			const lastPlayerHighlight = this.lastPlayerHighlight;
+			
+			this.setPlayerHighlight(lastPlayerHighlight, false);
+			if (lastPlayerHighlight == pid) return;
+		}
+		this.setPlayerHighlight(pid, true);
+	}
+
+	toggleMatchHighlight(pid1, pid2)
+	{
+		[ pid1, pid2 ] = [ Math.min(pid1, pid2), Math.max(pid1, pid2) ];
+		
+		if (this.lastMatchHighlight !== null)
+		{
+			const { pid1 : lastPid1, pid2 : lastPid2 } = this.lastMatchHighlight;
+			this.setMatchHighlight(lastPid1, lastPid2, false);
+			if (pid1 == lastPid1 && pid2 == lastPid2) return;
+		}
+		this.setMatchHighlight(pid1, pid2, true);
+	}
+
+	reset()
+	{
+		this.lastCellHighlight = null;
+		this.lastRowHighlight = null;
+		this.lastColHighlight = null;
+		
+		this.lastPlayerHighlight = null;
+		this.lastMatchHighlight = null;
+	}
+
+	apply(byPid = true)
+	{
+		if (byPid)
+		{
+			if (this.lastPlayerHighlight !== null)
+				this.setPlayerHighlight(this.lastPlayerHighlight);
+			if (this.lastMatchHighlight !== null)
+				this.setMatchHighlight(this.lastMatchHighlight.pid1, this.lastMatchHighlight.pid2);
+		}
+		else // byGrid
+		{
+			if (this.lastRowHighlight !== null)
+				this.setRowHighlight(this.lastRowHighlight);
+			if (this.lastColHighlight !== null)
+				this.setColHighlight(this.lastColHighlight);
+			if (this.lastCellHighlight !== null)
 			{
-				this.lastRowHighlight = null;
-				return;
+				const { row, col } = this.lastCellHighlight;
+				this.setCellHighlight(row, col);
 			}
 		}
-		this.lastRowHighlight = row;
-		this.setRowHighlight(row);
 	}
 
 	setRowHighlight(row, on = true)
 	{
-		if (row === null) return;
+		this.lastRowHighlight = on ? row : null;
+		
 		const tr = $(this.table.getCell(row, 0)).parent();
 		if (on) tr.addClass(this.playerHighlightClass);
 		else tr.removeClass(this.playerHighlightClass);
 	}
 
-	clearLastRowHighlight()
-	{
-		if (this.lastRowHighlight === null) return;
-		this.setRowHighlight(this.lastRowHighlight, false);
-		this.lastRowHighlight = null;
-	}
-
-	toggleColHighlight(col)
-	{
-		if (this.lastColHighlight !== null)
-		{
-			this.setColHighlight(this.lastColHighlight, false);
-			if (this.lastColHighlight == col)
-			{
-				this.lastColHighlight = null;
-				return;
-			}
-		}
-		this.lastColHighlight = col;
-		this.setColHighlight(col);
-	}
-
 	setColHighlight(col, on = true)
 	{
-		if (col === null) return;
+		this.lastColHighlight = on ? col : null;
+		
 		for (let row = 0; row <= this.table.count; ++row)
 		{
 			const td = $(this.table.getCell(row, col));
@@ -106,10 +116,32 @@ export class CrossTableHighlighter
 		}
 	}
 
-	clearLastColHighlight()
+	setCellHighlight(row, col, on=true)
 	{
-		if (this.lastColHighlight === null) return;
-		this.setColHighlight(this.lastColHighlight, false);
-		this.lastColHighlight = null;
+		[row, col] = [ Math.min(row, col), Math.max(row, col) ];
+		this.lastCellHighlight = on ? { row, col } : null;
+		
+		const first = $(this.table.getCell(row, col + 1));
+		if (on) first.addClass(this.cellHighlightClass);
+		else first.removeClass(this.cellHighlightClass);
+		
+		const second = $(this.table.getCell(col, row + 1));
+		if (on) second.addClass(this.cellHighlightClass);
+		else second.removeClass(this.cellHighlightClass);
+	}
+
+	toggleRowHighlight(row)
+	{
+		throw new Error("Not implemented yet.");
+	}
+
+	toggleColHighlight(col)
+	{
+		throw new Error("Not implemented yet.");
+	}
+
+	toggleCellHighlight(row_, col_)
+	{
+		throw new Error("Not implemented yet.");
 	}
 }

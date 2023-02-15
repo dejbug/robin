@@ -1,5 +1,10 @@
 import { strCmp } from "./tools.js";
 
+// TODO: This class is a misnomer. It's not the matches that are sorted.
+//	It's the model which is extended by a sorting capability. Maybe
+//	this is an indication of muddled thinking. Maybe the muddled
+//	thinking precludes a better design.
+
 export class SortedMatches
 {
 	constructor(matches)
@@ -7,6 +12,11 @@ export class SortedMatches
 		this.matches = matches;
 		this.row2pid = null;
 		this.pid2row = null;
+		// FIXME: Instead of sorting here, which is expensive,
+		//	it would suffice to simply create an identity map.
+		//	Not only would it suffice but it would match the
+		//	expectations of the user.
+		this.sortById();
 	}
 
 	dump()

@@ -6,7 +6,6 @@ export class Matches
 {
 	constructor(json)
 	{
-		json = this.Sanitize(json);
 		this.pa = json.players;	// players array
 		this.pd = [];			// players dict
 		for (let i = 0; i < this.pa.length; ++i)
@@ -16,23 +15,6 @@ export class Matches
 		}
 		this.ma = json.matches;
 		this.count = this.pd.length;
-	}
-
-	Sanitize(json)
-	{
-		// TODO: Is this function necessary?? #trustno1
-		// TODO: Remove empty array elements.
-		const players = json.players.slice(0);
-		const matches = json.matches.slice(0);
-		// Make sure players are sorted by pid in ascending order.
-		// TODO: We could easily move this into SortedMatches by
-		//	requiring that CrossTable.setData() initializes pid2row
-		//	by calling SortedMatches.sortById(). This would have
-		//	the added benefit of obsoleteing if(pid2row) checks.
-		players.sort(function (a, b) {
-			return a[0] - b[0];
-		});
-		return {players : players, matches : matches};
 	}
 
 	dump()
