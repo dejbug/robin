@@ -1,5 +1,7 @@
 import { getCellCoords, scoreToString } from "./tools.js";
 import { CrossTableHighlighter } from "./CrossTableHighlighter.js";
+import { Matches } from "./Matches.js";
+import { SortedMatches } from "./SortedMatches.js";
 
 export class CrossTable
 {
@@ -8,7 +10,7 @@ export class CrossTable
 		this.paneId = paneId;
 		this.prefix = "data-cc-";
 		this.table = null;
-		this.data = null;
+		this.model = null;
 		this.count = 0;
 		this.hi = new CrossTableHighlighter(this);
 	}
@@ -62,14 +64,15 @@ export class CrossTable
 		}
 	}
 
-	fill(players, matches)
+	fill(players, matches, pid2row)
 	{
 		// TODO: Error if players.length > this.count ?
 		
 		for (let i = 0; i < players.length; ++i)
 		{
 			const p = players[i];
-			const cell = $(this.getNameCell(i + 1));
+			const row = pid2row ? pid2row[p[0]] : i + 1;
+			const cell = $(this.getNameCell(row));
 			cell.text(p[1]);
 			// cell.attr("data-pid", p[0]);
 		}
@@ -77,8 +80,10 @@ export class CrossTable
 		for (let i = 0; i < matches.length; ++i)
 		{
 			const m = matches[i];
-			const whiteCell = $(this.getScoreCell(m[0], m[1]));
-			const blackCell = $(this.getScoreCell(m[1], m[0]));
+			const whiteRow = pid2row ? pid2row[m[0]] : m[0];
+			const blackRow = pid2row ? pid2row[m[1]] : m[1];
+			const whiteCell = $(this.getScoreCell(whiteRow, blackRow));
+			const blackCell = $(this.getScoreCell(blackRow, whiteRow));
 			whiteCell.html(scoreToString(m[2]));
 			whiteCell.attr("data-res", m[2]);
 			blackCell.html(scoreToString(1 - m[2]));
@@ -86,6 +91,9 @@ export class CrossTable
 			whiteCell.attr("data-side", "w");
 			blackCell.attr("data-side", "b");
 		}
+		
+		// TODO: Do this with the internal data since accessing the DOM might be
+		//	too expensive. Don't forget to use the pid2row LUT if present!
 		
 		for (let i = 0; i < players.length; ++i)
 		{
@@ -141,15 +149,19 @@ export class CrossTable
 
 	setData(data)
 	{
-		this.data = data;
+		this.model = new SortedMatches(new Matches(data));
+		return this.model;
 	}
 
 	update()
 	{
-		if (!this.data) return false;
+		// FIXME: Reset highlighter state.
+		// TODO: Do we need a nicer model API?
+		
+		if (!this.model) return false;
 		this.remove();
-		this.create(this.data.players.length);
-		this.fill(this.data.players, this.data.matches);
+		this.create(this.model.matches.pa.length);
+		this.fill(this.model.matches.pa, this.model.matches.ma, this.model.pid2row);
 		this.attach();
 		return true;
 	}
@@ -190,6 +202,8 @@ export class CrossTable
 
 	onPlayerClicked(e, row, text)
 	{
+		// TODO: Print player id, not just row.
+		
 		console.log("onPlayerClicked(e, " + row + ", '" + text + "')");
 		this.hi.toggleRowHighlight(row);
 		this.hi.toggleColHighlight(row + 1);
@@ -197,20 +211,29 @@ export class CrossTable
 
 	onScoreClicked(e, row, col, text)
 	{
+		// TODO: Print player id, not just row.
+		
 		console.log("onScoreClicked(e, " + row + ", " + col + ", '" + text + "')");
 		this.hi.toggleMatchHighlight(row, col);
 	}
 
 	onSortByName(e)
 	{
+		// TODO: Repeated clicks toggle sorting order.
+		
 		console.log("onSortByName(e)");
-		// this.sm.onSortByName();
-		// this.sm.dump();
-		// this.update();
+		if (!this.model) return;
+		this.model.sortByName();
+		this.update();
 	}
 
 	onSortByPoints(e)
 	{
+		// TODO: Repeated clicks toggle sorting order.
+		
 		console.log("onSortByPoints(e)");
+		if (!this.model) return;
+		this.model.sortByPoints();
+		this.update();
 	}
 }

@@ -15,9 +15,11 @@
 	import { CrossTable } from "./CrossTable.js";
 	let table = new CrossTable("#tablepane");
 	table.installEvents();
-	table.setData(data);
+	let model = table.setData(data);
 	table.update();
 	// data.players[0][1] = "Karpov";
+	// table.update();
+	// model.sortByName(true);
 	// table.update();
 	
 	import { Matches } from "./Matches.js";
