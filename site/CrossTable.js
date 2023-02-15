@@ -31,7 +31,7 @@ export class CrossTable
 		this.table = $("<table>");
 		
 		let tr = $("<tr>");
-		$("<th>").text("#").addClass(cc.inert).appendTo(tr);
+		$("<th>").text("#").addClass(cc.sortable).appendTo(tr);
 		$("<th>").text("Name").addClass(cc.sortable).appendTo(tr);
 		for (let i = 0; i < count; ++i)
 			$("<th>").text(i + 1).addClass(cc.player).appendTo(tr);
@@ -126,7 +126,9 @@ export class CrossTable
 			
 			if (cc.row == 0)
 			{
-				if (cc.col == 1)
+				if (cc.col == 0)
+					this.onSortById(e);
+				else if (cc.col == 1)
 					this.onSortByName(e);
 				else
 				{
@@ -218,6 +220,16 @@ export class CrossTable
 		console.log(`onScoreClicked(e, ${row} (${rowpid}), ${col} (${colpid}), '${text}')`);
 		
 		this.hi.toggleMatchHighlight(rowpid, colpid);
+	}
+
+	onSortById(e)
+	{
+		// TODO: Repeated clicks should toggle sorting order.
+		
+		console.log("onSortById(e)");
+		if (!this.model) return;
+		this.model.sortById();
+		this.update();
 	}
 
 	onSortByName(e)
