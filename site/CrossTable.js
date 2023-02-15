@@ -165,6 +165,7 @@ export class CrossTable
 		this.attach();
 		if (this.opt.keepLastHighlight) this.hi.apply(this.opt.keepLastHighlightSorted);
 		else this.hi.reset();
+		// this.makeScoreCellsRectangular();
 		return true;
 	}
 
@@ -237,5 +238,25 @@ export class CrossTable
 		if (!this.model) return;
 		this.model.sortByPoints();
 		this.update();
+	}
+	
+	makeScoreCellsRectangular()
+	{
+		if (!this.table) return;
+		if (!this.model) return;
+		
+		const count = this.model.matches.pa.length;
+		for (let i=1; i <= count; ++i)
+			for (let j=1; j <= count; ++j)
+			{
+				let td = this.getScoreCell(i, j);
+				if (!td) continue;
+				td = $(td);
+				const w = parseFloat(td.css("width"));
+				const h = parseFloat(td.css("height"));
+				let size = Math.max(w, h);
+				td.css("width", size + "px");
+				td.css("height", size + "px");
+			}
 	}
 }
