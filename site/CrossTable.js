@@ -8,6 +8,7 @@ export class CrossTable
 		this.paneId = paneId;
 		this.prefix = "data-cc-";
 		this.table = null;
+		this.data = null;
 		this.count = 0;
 		this.hi = new CrossTableHighlighter(this);
 	}
@@ -138,12 +139,19 @@ export class CrossTable
 		});
 	}
 
-	update(players, matches)
+	setData(data)
 	{
+		this.data = data;
+	}
+
+	update()
+	{
+		if (!this.data) return false;
 		this.remove();
-		this.create(players.length);
-		this.fill(players, matches);
+		this.create(this.data.players.length);
+		this.fill(this.data.players, this.data.matches);
 		this.attach();
+		return true;
 	}
 
 	sumRowPoints(row)
