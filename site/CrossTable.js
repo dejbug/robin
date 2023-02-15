@@ -13,7 +13,11 @@ export class CrossTable
 		this.model = null;
 		this.count = 0;
 		this.hi = new CrossTableHighlighter(this);
-		this.opt = { keepLastHighlight : true, keepLastHighlightSorted : true, }
+		this.opt = {
+			keepLastHighlight : true,
+			keepLastHighlightSorted : true,
+			forceRectangularScoreCells : false,
+		};
 	}
 
 	create(count)
@@ -167,7 +171,7 @@ export class CrossTable
 		this.attach();
 		if (this.opt.keepLastHighlight) this.hi.apply(this.opt.keepLastHighlightSorted);
 		else this.hi.reset();
-		// this.makeScoreCellsRectangular();
+		if (this.opt.forceRectangularScoreCells) this.makeScoreCellsRectangular();
 		return true;
 	}
 
@@ -208,8 +212,7 @@ export class CrossTable
 	onPlayerClicked(e, row, text)
 	{
 		const pid = this.model.row2pid[row];
-		console.log(`onPlayerClicked(e, ${row} (${pid}), '${text}')`);
-		
+		// console.log(`onPlayerClicked(e, ${row} (${pid}), '${text}')`);
 		this.hi.togglePlayerHighlight(pid);
 	}
 
@@ -217,14 +220,13 @@ export class CrossTable
 	{
 		const rowpid = this.model.row2pid[row];
 		const colpid = this.model.row2pid[col];
-		console.log(`onScoreClicked(e, ${row} (${rowpid}), ${col} (${colpid}), '${text}')`);
-		
+		// console.log(`onScoreClicked(e, ${row} (${rowpid}), ${col} (${colpid}), '${text}')`);
 		this.hi.toggleMatchHighlight(rowpid, colpid);
 	}
 
 	onSortById(e)
 	{
-		console.log("onSortById(e)");
+		// console.log("onSortById(e)");
 		if (!this.model) return;
 		this.model.sortById();
 		this.update();
@@ -232,7 +234,7 @@ export class CrossTable
 
 	onSortByName(e)
 	{
-		console.log("onSortByName(e)");
+		// console.log("onSortByName(e)");
 		if (!this.model) return;
 		this.model.sortByName();
 		this.update();
@@ -240,7 +242,7 @@ export class CrossTable
 
 	onSortByPoints(e)
 	{
-		console.log("onSortByPoints(e)");
+		// console.log("onSortByPoints(e)");
 		if (!this.model) return;
 		this.model.sortByPoints();
 		this.update();
