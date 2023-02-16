@@ -86,6 +86,13 @@ export class SortedMatches
 
 	sortByPoints(reversed = false)
 	{
+		// TODO: Add more fallback sorting options. E.g. instead of
+		//	falling back on name sort (in case of points equality)
+		//	maybe first sort by rank of defeated opponents? So:
+		//	if A.points == B.points but A fought stronger players
+		//	than B, then A.rank < B.rank. "Stronger" meaning
+		//	"currently lower ranked (i.e. higher up the list)".
+		
 		this.lastSortMode = this.lastSortMode == 3 ? -this.lastSortMode : 3;
 		reversed = reversed || this.lastSortMode < 0
 		
