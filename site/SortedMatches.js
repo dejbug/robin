@@ -84,7 +84,7 @@ export class SortedMatches
 		}
 	}
 
-	sortByPoints(reversed = false)
+	sortByPoints(reversed = false, pushDownDropouts = true)
 	{
 		// TODO: Add more fallback sorting options. E.g. instead of
 		//	falling back on name sort (in case of points equality)
@@ -99,9 +99,15 @@ export class SortedMatches
 		this.row2pid = [];
 		this.pid2row = [];
 		const tpa = this.matches.getTotalPointsArray();
+		console.log(tpa);
 		tpa.sort(function (a,b) {
 			let cmp = Math.sign(b[2] - a[2]);
 			if (cmp == 0) cmp = strCmp(a[1], b[1]);
+			if (pushDownDropouts)
+			{
+				if (a[3]) cmp += reversed ? -tpa.length : tpa.length;
+				if (b[3]) cmp -= reversed ? -tpa.length : tpa.length;
+			}
 			return reversed ? 1 - cmp : cmp;
 		});
 		for (let i = 0; i < tpa.length; ++i)

@@ -55,7 +55,15 @@ export class Matches
 		// TODO: Optimize it by reducing to a single loop?
 		const tpa = [];
 		for (let pid in this.pd)
-			tpa.push([parseInt(pid), this.pd[pid], this.getTotalPointsForPlayer(pid)]);
+		{
+			pid = parseInt(pid);
+			tpa.push([
+				pid,
+				this.pd[pid],
+				this.getTotalPointsForPlayer(pid),
+				this.isDropout(pid),
+			]);
+		}
 		return tpa;
 	}
 
