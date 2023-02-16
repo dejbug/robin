@@ -21,6 +21,22 @@ export class CrossTable
 		};
 	}
 
+	attach() { if(this.table) $(this.table).appendTo(this.paneId); }
+
+	remove() { if(this.table) $(this.table).remove(); }
+
+	installEvents() { $(this.paneId).on("mousedown", e => { this.onMouseDown(e) }); }
+
+	setData(data) { return this.model = new SortedMatches(new Matches(data)); }
+
+	getCell(row, col) { return this.table[0].childNodes[row].childNodes[col]; }
+
+	getScoreCell(row, col) { return this.getCell(row, col + 1); }
+
+	getNameCell(row) { return this.getCell(row, 1); }
+
+	getPointsCell(row) { return this.getCell(row, 2 + this.count); }
+
 	create(count)
 	{
 		// const suits = ["&spades;", "&clubs;", "&hearts;", "&diams;"];
@@ -110,65 +126,6 @@ export class CrossTable
 		}
 	}
 
-	remove()
-	{
-		if(this.table) $(this.table).remove();
-	}
-
-	attach()
-	{
-		if(this.table) $(this.table).appendTo(this.paneId);
-	}
-
-	installEvents()
-	{
-		$(this.paneId).on("mousedown", (e) =>
-		{
-			e.preventDefault();
-			
-			const cc = getCellCoords(e.target);
-			if (!cc) return;
-			// console.log(cc);
-			
-			if (cc.row == 0)
-			{
-				if (cc.col == 0)
-					this.onSortById(e);
-				else if (cc.col == 1)
-					this.onSortByName(e);
-				else
-				{
-					if (cc.col - 2 == this.count)
-						this.onSortByPoints(e);
-					else if (cc.col >= 2 && cc.col - 1 <= this.count)
-						this.onPlayerClicked(e, cc.col - 1, this.getNameCell(cc.col - 1).innerText, e.originalEvent.button);
-				}
-			}
-			else if (cc.row >= 1)
-			{
-				if (cc.col == 0)
-					this.onPlayerClicked(e, cc.row, this.getNameCell(cc.row).innerText,
-							e.originalEvent.button);
-				else if (cc.col == 1)
-					this.onPlayerClicked(e, cc.row, e.target.innerText,
-							e.originalEvent.button);
-				else if (cc.col >= 2 && cc.col - 1 != cc.row && cc.col - 1 <= this.count)
-					this.onScoreClicked(e, cc.row, cc.col - 1, e.target.innerText,
-							e.originalEvent.button);
-			}
-		});
-	}
-
-	onMouseDown(e)
-	{
-	}
-	
-	setData(data)
-	{
-		this.model = new SortedMatches(new Matches(data));
-		return this.model;
-	}
-
 	update()
 	{
 		// TODO: Do we need a nicer model API?
@@ -198,24 +155,46 @@ export class CrossTable
 		return points;
 	}
 
-	getCell(row, col)
+	onMouseDown(e)
 	{
-		return this.table[0].childNodes[row].childNodes[col];
-	}
-
-	getScoreCell(row, col)
-	{
-		return this.getCell(row, col + 1);
-	}
-
-	getNameCell(row)
-	{
-		return this.getCell(row, 1);
-	}
-
-	getPointsCell(row)
-	{
-		return this.getCell(row, 2 + this.count);
+		e.preventDefault();
+		
+		const cc = getCellCoords(e.target);
+		if (!cc) return;
+		
+		if (cc.row == 0)
+		{
+			if (cc.col == 0)
+				this.onIdHeaderClicked(e);
+			else if (cc.col == 1)
+				this.onNameHeaderClicked(e);
+			else
+			{
+				if (cc.col - 2 == this.count)
+					this.onPointsHeaderClicked(e);
+				
+				else if (cc.col >= 2 && cc.col - 1 <= this.count)
+					this.onPlayerClicked(e, cc.col - 1,
+						this.getNameCell(cc.col - 1).innerText,
+						e.originalEvent.button);
+			}
+		}
+		else if (cc.row >= 1)
+		{
+			if (cc.col == 0)
+				this.onPlayerClicked(e, cc.row,
+					this.getNameCell(cc.row).innerText,
+					e.originalEvent.button);
+			
+			else if (cc.col == 1)
+				this.onPlayerClicked(e, cc.row,
+					e.target.innerText,
+					e.originalEvent.button);
+			
+			else if (cc.col >= 2 && cc.col - 1 != cc.row && cc.col - 1 <= this.count)
+				this.onScoreClicked(e, cc.row, cc.col - 1,
+					e.target.innerText, e.originalEvent.button);
+		}
 	}
 
 	onPlayerClicked(e, row, text, button)
@@ -233,30 +212,30 @@ export class CrossTable
 		this.hi.toggleMatchHighlight(rowpid, colpid);
 	}
 
-	onSortById(e)
+	onIdHeaderClicked(e)
 	{
-		// console.log("onSortById(e)");
+		// console.log("onIdHeaderClicked(e)");
 		if (!this.model) return;
 		this.model.sortById();
 		this.update();
 	}
 
-	onSortByName(e)
+	onNameHeaderClicked(e)
 	{
-		// console.log("onSortByName(e)");
+		// console.log("onNameHeaderClicked(e)");
 		if (!this.model) return;
 		this.model.sortByName();
 		this.update();
 	}
 
-	onSortByPoints(e)
+	onPointsHeaderClicked(e)
 	{
-		// console.log("onSortByPoints(e)");
+		// console.log("onPointsHeaderClicked(e)");
 		if (!this.model) return;
 		this.model.sortByPoints();
 		this.update();
 	}
-	
+
 	makeScoreCellsRectangular()
 	{
 		if (!this.table) return;
