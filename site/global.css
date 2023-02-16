@@ -11,14 +11,15 @@ table > tr > td:nth-child(1) { font-weight: bold; }
 	background-image: url(crossthrough.svg); background-size: 1em;;
 }
 tr.data-cc-dropout td:nth-child(2) { color: lightgrey; }
+td[data-side=b].data-cc-dropout::after { color: transparent; }
 
 .data-cc-celltype-inert { cursor: not-allowed; }
 .data-cc-celltype-sortable { cursor: ns-resize; }
 .data-cc-celltype-player { cursor: pointer; }
 .data-cc-celltype-cell { cursor: cell; }
 
-table td[data-side=b] { position: relative; background-clip: padding-box; }
-table td[data-side=b]::after {
+td[data-side=b] { position: relative; background-clip: padding-box; }
+td[data-side=b]::after {
 	content: "s";
 	color: grey;
 	font-size: 60%;

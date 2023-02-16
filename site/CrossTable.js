@@ -212,6 +212,12 @@ export class CrossTable
 
 	onPlayerClicked(e, row, text, button)
 	{
+		// TODO: If a disabled (dropout) player is clicked, just remove
+		// the last player highlight but make disabled players
+		// non-highlightable. This is implicitly working for now,
+		// b/c our background images have a hard-coded background
+		// color (which is drawn on top of the cells' background).
+		
 		const pid = this.model.row2pid[row];
 		// console.log(`onPlayerClicked(e, ${row} (${pid}), '${text}', ${button})`);
 		if (button == 0) this.hi.togglePlayerHighlight(pid);
@@ -273,17 +279,25 @@ export class CrossTable
 	setRowClass(row, cls, on = true)
 	{
 		cls = this.prefix + cls;
+		
 		const tr = $(this.getCell(row, 0)).parent();
 		if (on) tr.addClass(cls);
 		else tr.removeClass(cls);
+		
+		for (let col = 0; col < this.count + 3; ++col)
+		{
+			const td = $(this.getCell(row, col));
+			if (on) td.addClass(cls);
+			else td.removeClass(cls);
+		}
 	}
 
 	setColClass(col, cls, on = true)
 	{
-		// TODO: Instead of the loop, maybe we could use colgroups here?
+		// TODO: In addition, maybe we could use colgroups here?
 		
-		cls = this.prefix + cls;	
-		for (let row = 0; row <= this.count; ++row)
+		cls = this.prefix + cls;
+		for (let row = 0; row < this.count + 1; ++row)
 		{
 			const td = $(this.getCell(row, col));
 			if (on) td.addClass(cls);
@@ -303,5 +317,15 @@ export class CrossTable
 		
 		this.setRowClass(row, "dropout", index < 0);
 		this.setColClass(col, "dropout", index < 0);
+		
+		if (index >= 0)
+		{
+			// When enabling players, we need to update the whole table b/c
+			// removing classes (in the re-enabled player) might have removed
+			// the classes in the still remaining dropouts (because they cross
+			// each other). Making this more efficient would involve some array
+			// searching & row/col calculation but should be more efficient.
+			this.update();
+		}
 	}
 }
