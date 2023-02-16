@@ -99,7 +99,6 @@ export class SortedMatches
 		this.row2pid = [];
 		this.pid2row = [];
 		const tpa = this.matches.getTotalPointsArray();
-		console.log(tpa);
 		tpa.sort(function (a,b) {
 			let cmp = Math.sign(b[2] - a[2]);
 			if (cmp == 0) cmp = strCmp(a[1], b[1]);

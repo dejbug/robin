@@ -18,6 +18,7 @@ export class CrossTable
 			keepLastHighlightSorted : true,
 			forceRectangularScoreCells : false,
 			showPidsInsteadOfIndex : false,
+			pushDownDropouts : true,
 		};
 	}
 
@@ -300,7 +301,7 @@ export class CrossTable
 	{
 		// console.log("onPointsHeaderClicked(e)");
 		if (!this.model) return;
-		this.model.sortByPoints();
+		this.model.sortByPoints(false, this.opt.pushDownDropouts);
 		this.update();
 	}
 
