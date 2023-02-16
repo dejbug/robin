@@ -113,24 +113,9 @@ export class CrossTable
 			blackCell.attr("data-side", "b");
 		}
 		
-		for (let i = 0; i < players.length; ++i)
-		{
-			const points = this.sumRowPoints(i + 1);
-			const cell = $(this.getPointsCell(i + 1));
-			cell.text(points);
-		}
-		
-		for (let i in this.model.matches.dropouts)
-		{
-			const pid = this.model.matches.dropouts[i];
-			const row = this.model.pid2row[pid];
-			const col = row + 1;
-			
-			this.setRowClass(row, "dropout", true);
-			this.setColClass(col, "dropout", true);
-		}
-		
 		this.fillIds();
+		this.fillPoints();
+		this.fillDropouts();
 	}
 
 	fillIds()
@@ -159,6 +144,36 @@ export class CrossTable
 		}
 	}
 
+	fillPoints()
+	{
+		for (let i = 0; i < this.count; ++i)
+		{
+			const points = this.sumRowPoints(i + 1);
+			const cell = $(this.getPointsCell(i + 1));
+			cell.text(points);
+		}
+	}
+
+	fillDropouts(invalidate = true)
+	{
+		if (invalidate)
+			for (let i = 0; i < this.count; ++i)
+			{
+				this.setRowClass(i + 1, "dropout", false);
+				this.setColClass(i + 2, "dropout", false);
+			}
+		
+		for (let i in this.model.matches.dropouts)
+		{
+			const pid = this.model.matches.dropouts[i];
+			const row = this.model.pid2row[pid];
+			const col = row + 1;
+			
+			this.setRowClass(row, "dropout", true);
+			this.setColClass(col, "dropout", true);
+		}
+	}
+
 	update()
 	{
 		// TODO: Do we need a nicer model API?
@@ -183,10 +198,17 @@ export class CrossTable
 		//	too expensive. Don't forget to use the pid2row LUT!
 		
 		if (row < 1 || row > this.count) return null;
+		
+		const pid = this.model.row2pid[row];
+		if (this.model.matches.dropouts.indexOf(pid) >= 0) return null;
+		
 		let points = 0;
 		for (let col = 1; col <= this.count; ++col)
 		{
 			if (row == col) continue;
+			const pid = this.model.row2pid[col];
+			if (this.model.matches.dropouts.indexOf(pid) >= 0) continue;
+			
 			const cell = this.getScoreCell(row, col);
 			const val = parseFloat($(cell).attr("data-res"));
 			points += parseFloat(val);
@@ -347,16 +369,10 @@ export class CrossTable
 		this.setRowClass(row, "dropout", index < 0);
 		this.setColClass(col, "dropout", index < 0);
 		
-		this.fillIds();
+		// All of these things might be affected by players dropping in/out.
 		
-		if (index >= 0)
-		{
-			// When enabling players, we need to update the whole table b/c
-			// removing classes (in the re-enabled player) might have removed
-			// the classes in the still remaining dropouts (because they cross
-			// each other). Making this more efficient would involve some array
-			// searching & row/col calculation but should be more efficient.
-			this.update();
-		}
+		this.fillIds();
+		this.fillPoints();
+		this.fillDropouts(true);
 	}
 }

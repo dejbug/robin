@@ -58,4 +58,14 @@ export class Matches
 			tpa.push([parseInt(pid), this.pd[pid], this.getTotalPointsForPlayer(pid)]);
 		return tpa;
 	}
+
+	isDropout(pid) { return this.dropouts.indexOf(pid) >= 0; }
+
+	addDropout(pid)
+	{
+	}
+
+	removeDropout(pid)
+	{
+	}
 }
