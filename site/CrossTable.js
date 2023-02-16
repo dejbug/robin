@@ -19,6 +19,7 @@ export class CrossTable
 			forceRectangularScoreCells : false,
 			showPidsInsteadOfIndex : false,
 			pushDownDropouts : true,
+			smartResort : true,
 		};
 	}
 
@@ -116,6 +117,7 @@ export class CrossTable
 		
 		this.fillIds();
 		this.fillPoints();
+		this.fillPointsResortIndicator();
 		this.fillDropouts();
 	}
 
@@ -143,6 +145,16 @@ export class CrossTable
 			else if (this.model.matches.dropouts.indexOf(pid) < 0)
 				td.text(id += 1);
 		}
+	}
+
+	fillPointsResortIndicator()
+	{
+		const cls = `${this.prefix}resort`;
+		const th = this.table.find("th").last();
+		if (this.model.isSortedByPoints())
+			th.removeClass(cls);
+		else
+			th.addClass(cls);
 	}
 
 	fillPoints()
@@ -301,7 +313,7 @@ export class CrossTable
 	{
 		// console.log("onPointsHeaderClicked(e)");
 		if (!this.model) return;
-		this.model.sortByPoints(false, this.opt.pushDownDropouts);
+		this.model.sortByPoints(null, this.opt.pushDownDropouts, this.opt.smartResort);
 		this.update();
 	}
 
@@ -374,6 +386,7 @@ export class CrossTable
 		
 		this.fillIds();
 		this.fillPoints();
+		this.fillPointsResortIndicator();
 		this.fillDropouts(true);
 	}
 }

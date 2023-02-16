@@ -29,3 +29,11 @@ export function mouseButtonFlagString(event)
 	if (bb & 2) s += " R";
 	return s;
 }
+
+export function keys(arr, test = null)
+{
+	return Object.keys(arr)
+		.filter(key => {
+			return arr[key] && (!test || test(arr, key)) ? key : null;
+		});
+}

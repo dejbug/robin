@@ -1,4 +1,4 @@
-import { strCmp } from "./tools.js";
+import { strCmp, keys } from "./tools.js";
 
 // TODO: This class is a misnomer. It's not the matches that are sorted.
 //	It's the model which is extended by a sorting capability. Maybe
@@ -46,8 +46,12 @@ export class SortedMatches
 
 	sortById(reversed = null)
 	{
-		this.lastSortMode = this.lastSortMode == 1 ? -this.lastSortMode : 1;
-		reversed = reversed || this.lastSortMode < 0
+		if (reversed === null)
+		{
+			this.lastSortMode = this.lastSortMode == 1 ? -this.lastSortMode : 1;
+			reversed = this.lastSortMode < 0;
+		}
+		else this.lastSortMode = reversed ? -2 : 2;
 		
 		this.row2pid = [];
 		this.pid2row = [];
@@ -64,10 +68,14 @@ export class SortedMatches
 		}
 	}
 
-	sortByName(reversed = false)
+	sortByName(reversed = null)
 	{
-		this.lastSortMode = this.lastSortMode == 2 ? -this.lastSortMode : 2;
-		reversed = reversed || this.lastSortMode < 0
+		if (reversed === null)
+		{
+			this.lastSortMode = this.lastSortMode == 2 ? -this.lastSortMode : 2;
+			reversed = this.lastSortMode < 0;
+		}
+		else this.lastSortMode = reversed ? -2 : 2;
 		
 		this.row2pid = [];
 		this.pid2row = [];
@@ -84,7 +92,7 @@ export class SortedMatches
 		}
 	}
 
-	sortByPoints(reversed = false, pushDownDropouts = true)
+	sortByPoints(reversed = null, pushDownDropouts = true, smartResort = true)
 	{
 		// TODO: Add more fallback sorting options. E.g. instead of
 		//	falling back on name sort (in case of points equality)
@@ -93,12 +101,53 @@ export class SortedMatches
 		//	than B, then A.rank < B.rank. "Stronger" meaning
 		//	"currently lower ranked (i.e. higher up the list)".
 		
-		this.lastSortMode = this.lastSortMode == 3 ? -this.lastSortMode : 3;
-		reversed = reversed || this.lastSortMode < 0
+		// Whenever we call this in toggle mode (reversed == null),
+		//	we have to decide whether to reverse the sort (toggle)
+		//	or whether to resort.
 		
-		this.row2pid = [];
-		this.pid2row = [];
-		const tpa = this.matches.getTotalPointsArray();
+		// If the reversed param is true or false, then we just force the
+		//	sort that way.
+		// If reversing was left to us then, if we are supposed to be
+		//	sorted by points already, we would simply reverse the sort.
+		// But what if this.lastSortMode no longer reflects the actual
+		//	table sorting state? This could happen because match
+		//	results (score cells) were altered or when players have
+		//	dropped out. In this case we want to re-sort into whatever
+		//	we were supposed to be sorted in.
+		if (reversed !== null)
+			this.lastSortMode = reversed ? -3 : 3;
+		else if (!smartResort)
+		{
+			this.lastSortMode = this.lastSortMode == 3 ? -this.lastSortMode : 3;
+			reversed = this.lastSortMode < 0;
+		}
+		else if (Math.abs(this.lastSortMode) != 3)
+		{
+			// We haven't been sorted by points yet and reversing was
+			//	left to us. This is an initial sort (in descending order).
+			this.lastSortMode = 3;
+			reversed = false;
+		}
+		else
+		{
+			// NOTE: isSortedByPoints() is an expensive operation. We
+			//	basically sort twice (plus some additional comparisons).
+			if (this.isSortedByPoints() == this.lastSortMode)
+				this.lastSortMode = -this.lastSortMode;
+			reversed = this.lastSortMode < 0;
+		}
+		
+		[ this.row2pid, this.pid2row ] =
+			this.SortByPoints(this.matches, reversed, pushDownDropouts);
+	}
+
+	SortByPoints(matches, reversed = false, pushDownDropouts = true)
+	{
+		// TODO: See this.sortByPoints (i.e. the non-static namesake).
+		
+		let row2pid = [];
+		let pid2row = [];
+		const tpa = matches.getTotalPointsArray();
 		tpa.sort(function (a,b) {
 			let cmp = Math.sign(b[2] - a[2]);
 			if (cmp == 0) cmp = strCmp(a[1], b[1]);
@@ -112,8 +161,45 @@ export class SortedMatches
 		for (let i = 0; i < tpa.length; ++i)
 		{
 			const row = i + 1;
-			this.row2pid[row] = tpa[i][0];
-			this.pid2row[tpa[i][0]] = row;
+			row2pid[row] = tpa[i][0];
+			pid2row[tpa[i][0]] = row;
 		}
+		return [ row2pid, pid2row ];
+	}
+
+	isSortedByPoints()
+	{
+		// TODO: This seems such an inefficient way of doing it, but
+		//	I can't think of a better way just yet....
+		
+		const [ row2pid, pid2row ] = this.SortByPoints(this.matches);
+		
+		const cond = (pids, key) => {
+			return !this.matches.isDropout(pids[key]);
+		};
+		
+		const kk1 = keys(this.row2pid, cond);
+		const kk2 = keys(row2pid, cond);
+		const len = Math.min(kk1.length, kk2.length);
+		
+		// console.log(kk1, kk2);
+		
+		let feq = true;
+		let beq = true;
+		
+		for (let i = 0; i < len; ++i)
+		{
+			const k1f = kk1[i];
+			const k2f = kk2[i];
+			const k2r = kk2[len - 1 - i];
+			
+			if (this.row2pid[k1f] != row2pid[k2f]) feq = false;
+			if (this.row2pid[k1f] != row2pid[k2r]) beq = false;
+			
+			// console.log("[%.2d] %.2d.%.2d | %.2d.%.2d | %.2d.%.2d", i,
+			// 	k1f, this.row2pid[k1f], k2f, row2pid[k2f], k2r, row2pid[k2r]);
+		}
+		
+		return feq ? 3 : (beq ? -3 : 0);
 	}
 }

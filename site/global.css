@@ -28,6 +28,8 @@ td[data-side=b]::after {
 	top: 1.9em;
 }
 
+.data-cc-resort { text-decoration: underline; }
+
 .crosshatch { background-image: url(crosshatch.svg); }
 
 #resinfo {
