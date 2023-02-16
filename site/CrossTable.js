@@ -54,15 +54,15 @@ export class CrossTable
 		let tr = $("<tr>");
 		$("<th>").text("#").addClass(cc.sortable).appendTo(tr);
 		$("<th>").text("Name").addClass(cc.sortable).appendTo(tr);
-		for (let i = 0; i < count; ++i)
-			$("<th>").text(i + 1).addClass(cc.player).appendTo(tr);
+		for (let row = 1; row <= count; ++row)
+			$("<th>").addClass(cc.player).appendTo(tr);
 		$("<th>").text("Punkte").addClass(cc.sortable).appendTo(tr);
 		tr.appendTo(this.table);
 		
 		for (let i = 0; i < count; ++i)
 		{
 			let tr = $("<tr>");
-			$("<td>").text(i + 1).addClass(cc.player).appendTo(tr);
+			$("<td>").addClass(cc.player).appendTo(tr);
 			$("<td>").text("").addClass(cc.player).appendTo(tr);
 			
 			for (let j = 0; j < count + 1; ++j)
@@ -96,8 +96,6 @@ export class CrossTable
 			const row = pid2row ? pid2row[p[0]] : i + 1;
 			const cell = $(this.getNameCell(row));
 			cell.text(p[1]);
-			if (this.opt.showPidsInsteadOfIndex)
-				$(this.getCell(row, 0)).text(p[0]);
 		}
 		
 		for (let i = 0; i < matches.length; ++i)
@@ -130,6 +128,34 @@ export class CrossTable
 			
 			this.setRowClass(row, "dropout", true);
 			this.setColClass(col, "dropout", true);
+		}
+		
+		this.fillIds();
+	}
+
+	fillIds()
+	{
+		// TODO: If sorting by points and some players' points are equal
+		//	let them have the same id (rank). Also add an option for this.
+		
+		for (let col = 0, id = 0; col < this.count; ++col)
+		{
+			const pid = this.model.row2pid[col + 1];
+			const th = $(this.table.find("th")[col + 2]);
+			if (this.opt.showPidsInsteadOfIndex)
+				th.text(pid);
+			else if (this.model.matches.dropouts.indexOf(pid) < 0)
+				th.text(id += 1);
+		}
+		
+		for (let row = 0, id = 0; row < this.count; ++row)
+		{
+			const pid = this.model.row2pid[row + 1];
+			const td = $(this.getCell(row + 1, 0));
+			if (this.opt.showPidsInsteadOfIndex)
+				td.text(pid);
+			else if (this.model.matches.dropouts.indexOf(pid) < 0)
+				td.text(id += 1);
 		}
 	}
 
@@ -307,6 +333,9 @@ export class CrossTable
 	
 	togglePlayerEnabled(pid)
 	{
+		// TODO: Add an option to remove the player completely.
+		//	Maybe { display: none; } could serve to do just that?
+		
 		const row = this.model.pid2row[pid];
 		const col = row + 1;
 		
@@ -317,6 +346,8 @@ export class CrossTable
 		
 		this.setRowClass(row, "dropout", index < 0);
 		this.setColClass(col, "dropout", index < 0);
+		
+		this.fillIds();
 		
 		if (index >= 0)
 		{
