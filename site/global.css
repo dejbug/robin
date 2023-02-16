@@ -6,7 +6,7 @@ table > tr > td:nth-child(1) { font-weight: bold; }
 .data-cc-highlight-match { background-color: pink !important; }
 .data-cc-highlight-player { background-color: #eee; }
 
-.data-cc-dropout {
+.data-cc-dropout, .data-cc-dropout.crosshatch {
 	background-color: white; color: transparent;
 	background-image: url(crossthrough.svg); background-size: 1em;;
 }
