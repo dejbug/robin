@@ -15,7 +15,7 @@ export class Matches
 		}
 		this.ma = json.matches;
 		this.count = this.pd.length;
-		this.dropouts = {};
+		this.dropouts = [];
 	}
 
 	dump()

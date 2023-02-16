@@ -6,6 +6,12 @@ table > tr > td:nth-child(1) { font-weight: bold; }
 .data-cc-highlight-match { background-color: pink !important; }
 .data-cc-highlight-player { background-color: #eee; }
 
+.data-cc-dropout {
+	background-color: white; color: transparent;
+	background-image: url(crossthrough.svg); background-size: 1em;;
+}
+tr.data-cc-dropout td:nth-child(2) { color: lightgrey; }
+
 .data-cc-celltype-inert { cursor: not-allowed; }
 .data-cc-celltype-sortable { cursor: ns-resize; }
 .data-cc-celltype-player { cursor: pointer; }

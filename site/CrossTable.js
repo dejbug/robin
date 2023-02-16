@@ -115,14 +115,21 @@ export class CrossTable
 			blackCell.attr("data-side", "b");
 		}
 		
-		// TODO: Do this with the internal data since accessing the DOM might be
-		//	too expensive. Don't forget to use the pid2row LUT if present!
-		
 		for (let i = 0; i < players.length; ++i)
 		{
 			const points = this.sumRowPoints(i + 1);
 			const cell = $(this.getPointsCell(i + 1));
 			cell.text(points);
+		}
+		
+		for (let i in this.model.matches.dropouts)
+		{
+			const pid = this.model.matches.dropouts[i];
+			const row = this.model.pid2row[pid];
+			const col = row + 1;
+			
+			this.setRowClass(row, "dropout", true);
+			this.setColClass(col, "dropout", true);
 		}
 	}
 
@@ -135,14 +142,20 @@ export class CrossTable
 		this.create(this.model.matches.pa.length);
 		this.fill(this.model.matches.pa, this.model.matches.ma, this.model.pid2row);
 		this.attach();
-		if (this.opt.keepLastHighlight) this.hi.apply(this.opt.keepLastHighlightSorted);
-		else this.hi.reset();
-		if (this.opt.forceRectangularScoreCells) this.makeScoreCellsRectangular();
+		if (this.opt.keepLastHighlight)
+			this.hi.apply(this.opt.keepLastHighlightSorted);
+		else
+			this.hi.reset();
+		if (this.opt.forceRectangularScoreCells)
+			this.makeScoreCellsRectangular();
 		return true;
 	}
 
 	sumRowPoints(row)
 	{
+		// TODO: Do this with the internal data since accessing the DOM might be
+		//	too expensive. Don't forget to use the pid2row LUT!
+		
 		if (row < 1 || row > this.count) return null;
 		let points = 0;
 		for (let col = 1; col <= this.count; ++col)
@@ -200,15 +213,16 @@ export class CrossTable
 	onPlayerClicked(e, row, text, button)
 	{
 		const pid = this.model.row2pid[row];
-		console.log(`onPlayerClicked(e, ${row} (${pid}), '${text}', ${button})`);
-		this.hi.togglePlayerHighlight(pid);
+		// console.log(`onPlayerClicked(e, ${row} (${pid}), '${text}', ${button})`);
+		if (button == 0) this.hi.togglePlayerHighlight(pid);
+		if (button == 1) this.togglePlayerEnabled(pid);
 	}
 
 	onScoreClicked(e, row, col, text, button)
 	{
 		const rowpid = this.model.row2pid[row];
 		const colpid = this.model.row2pid[col];
-		console.log(`onScoreClicked(e, ${row} (${rowpid}), ${col} (${colpid}), '${text}', ${button})`);
+		// console.log(`onScoreClicked(e, ${row} (${rowpid}), ${col} (${colpid}), '${text}', ${button})`);
 		this.hi.toggleMatchHighlight(rowpid, colpid);
 	}
 
@@ -254,5 +268,40 @@ export class CrossTable
 				td.css("width", size + "px");
 				td.css("height", size + "px");
 			}
+	}
+
+	setRowClass(row, cls, on = true)
+	{
+		cls = this.prefix + cls;
+		const tr = $(this.getCell(row, 0)).parent();
+		if (on) tr.addClass(cls);
+		else tr.removeClass(cls);
+	}
+
+	setColClass(col, cls, on = true)
+	{
+		// TODO: Instead of the loop, maybe we could use colgroups here?
+		
+		cls = this.prefix + cls;	
+		for (let row = 0; row <= this.count; ++row)
+		{
+			const td = $(this.getCell(row, col));
+			if (on) td.addClass(cls);
+			else td.removeClass(cls);
+		}
+	}
+	
+	togglePlayerEnabled(pid)
+	{
+		const row = this.model.pid2row[pid];
+		const col = row + 1;
+		
+		const index = this.model.matches.dropouts.indexOf(pid);
+		
+		if (index < 0) this.model.matches.dropouts.push(pid);
+		else delete this.model.matches.dropouts[index];
+		
+		this.setRowClass(row, "dropout", index < 0);
+		this.setColClass(col, "dropout", index < 0);
 	}
 }
