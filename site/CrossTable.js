@@ -141,21 +141,28 @@ export class CrossTable
 					if (cc.col - 2 == this.count)
 						this.onSortByPoints(e);
 					else if (cc.col >= 2 && cc.col - 1 <= this.count)
-						this.onPlayerClicked(e, cc.col - 1, this.getNameCell(cc.col - 1).innerText);
+						this.onPlayerClicked(e, cc.col - 1, this.getNameCell(cc.col - 1).innerText, e.originalEvent.button);
 				}
 			}
 			else if (cc.row >= 1)
 			{
 				if (cc.col == 0)
-					this.onPlayerClicked(e, cc.row, this.getNameCell(cc.row).innerText);
+					this.onPlayerClicked(e, cc.row, this.getNameCell(cc.row).innerText,
+							e.originalEvent.button);
 				else if (cc.col == 1)
-					this.onPlayerClicked(e, cc.row, e.target.innerText);
+					this.onPlayerClicked(e, cc.row, e.target.innerText,
+							e.originalEvent.button);
 				else if (cc.col >= 2 && cc.col - 1 != cc.row && cc.col - 1 <= this.count)
-					this.onScoreClicked(e, cc.row, cc.col - 1, e.target.innerText);
+					this.onScoreClicked(e, cc.row, cc.col - 1, e.target.innerText,
+							e.originalEvent.button);
 			}
 		});
 	}
 
+	onMouseDown(e)
+	{
+	}
+	
 	setData(data)
 	{
 		this.model = new SortedMatches(new Matches(data));
@@ -211,18 +218,18 @@ export class CrossTable
 		return this.getCell(row, 2 + this.count);
 	}
 
-	onPlayerClicked(e, row, text)
+	onPlayerClicked(e, row, text, button)
 	{
 		const pid = this.model.row2pid[row];
-		// console.log(`onPlayerClicked(e, ${row} (${pid}), '${text}')`);
+		console.log(`onPlayerClicked(e, ${row} (${pid}), '${text}', ${button})`);
 		this.hi.togglePlayerHighlight(pid);
 	}
 
-	onScoreClicked(e, row, col, text)
+	onScoreClicked(e, row, col, text, button)
 	{
 		const rowpid = this.model.row2pid[row];
 		const colpid = this.model.row2pid[col];
-		// console.log(`onScoreClicked(e, ${row} (${rowpid}), ${col} (${colpid}), '${text}')`);
+		console.log(`onScoreClicked(e, ${row} (${rowpid}), ${col} (${colpid}), '${text}', ${button})`);
 		this.hi.toggleMatchHighlight(rowpid, colpid);
 	}
 
