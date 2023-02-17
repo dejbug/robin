@@ -61,7 +61,6 @@ export class Matches
 				pid,
 				this.pd[pid],
 				this.getTotalPointsForPlayer(pid),
-				this.isDropout(pid),
 			]);
 		}
 		return tpa;

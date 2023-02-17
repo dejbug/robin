@@ -297,7 +297,7 @@ export class CrossTable
 	{
 		// console.log("onIdHeaderClicked(e)");
 		if (!this.model) return;
-		this.model.sortById();
+		this.model.sortById(null, this.opt.pushDownDropouts);
 		this.update();
 	}
 
@@ -305,7 +305,7 @@ export class CrossTable
 	{
 		// console.log("onNameHeaderClicked(e)");
 		if (!this.model) return;
-		this.model.sortByName();
+		this.model.sortByName(null, this.opt.pushDownDropouts);
 		this.update();
 	}
 

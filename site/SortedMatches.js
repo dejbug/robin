@@ -44,7 +44,7 @@ export class SortedMatches
 		console.log("Ir<", this.pid2row);
 	}
 
-	sortById(reversed = null)
+	sortById(reversed = null, pushDownDropouts = false)
 	{
 		if (reversed === null)
 		{
@@ -56,8 +56,13 @@ export class SortedMatches
 		this.row2pid = [];
 		this.pid2row = [];
 		const pa = this.matches.pa.slice(0);
-		pa.sort(function (a,b) {
-			const cmp = a[0] - b[0];
+		pa.sort((a,b) => {
+			let cmp = a[0] - b[0];
+			if (pushDownDropouts)
+			{
+				if (this.matches.isDropout(a[0])) cmp += reversed ? -pa.length : pa.length;
+				if (this.matches.isDropout(b[0])) cmp -= reversed ? -pa.length : pa.length;
+			}
 			return reversed ? 1 - cmp : cmp;
 		});
 		for (let i = 0; i < pa.length; ++i)
@@ -68,7 +73,7 @@ export class SortedMatches
 		}
 	}
 
-	sortByName(reversed = null)
+	sortByName(reversed = null, pushDownDropouts = false)
 	{
 		if (reversed === null)
 		{
@@ -80,8 +85,13 @@ export class SortedMatches
 		this.row2pid = [];
 		this.pid2row = [];
 		const pa = this.matches.pa.slice(0);
-		pa.sort(function (a,b) {
-			const cmp = strCmp(a[1], b[1]);
+		pa.sort((a,b) => {
+			let cmp = strCmp(a[1], b[1]);
+			if (pushDownDropouts)
+			{
+				if (this.matches.isDropout(a[0])) cmp += reversed ? -pa.length : pa.length;
+				if (this.matches.isDropout(b[0])) cmp -= reversed ? -pa.length : pa.length;
+			}
 			return reversed ? 1 - cmp : cmp;
 		});
 		for (let i = 0; i < pa.length; ++i)
@@ -92,7 +102,7 @@ export class SortedMatches
 		}
 	}
 
-	sortByPoints(reversed = null, pushDownDropouts = true, smartResort = true)
+	sortByPoints(reversed = null, pushDownDropouts = false, smartResort = false)
 	{
 		// TODO: Add more fallback sorting options. E.g. instead of
 		//	falling back on name sort (in case of points equality)
@@ -148,13 +158,13 @@ export class SortedMatches
 		let row2pid = [];
 		let pid2row = [];
 		const tpa = matches.getTotalPointsArray();
-		tpa.sort(function (a,b) {
+		tpa.sort((a,b) => {
 			let cmp = Math.sign(b[2] - a[2]);
 			if (cmp == 0) cmp = strCmp(a[1], b[1]);
 			if (pushDownDropouts)
 			{
-				if (a[3]) cmp += reversed ? -tpa.length : tpa.length;
-				if (b[3]) cmp -= reversed ? -tpa.length : tpa.length;
+				if (this.matches.isDropout(a[0])) cmp += reversed ? -tpa.length : tpa.length;
+				if (this.matches.isDropout(b[0])) cmp -= reversed ? -tpa.length : tpa.length;
 			}
 			return reversed ? 1 - cmp : cmp;
 		});
