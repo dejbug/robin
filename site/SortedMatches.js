@@ -142,76 +142,99 @@ export class SortedMatches
 		}
 		else
 		{
-			// NOTE: isSortedByPoints() is an expensive operation. We
-			//	basically sort twice (plus some additional comparisons).
-			if (this.isSortedByPoints() == this.lastSortMode)
+			if (this.isSortedByPoints() == Math.sign(this.lastSortMode))
 				this.lastSortMode = -this.lastSortMode;
 			reversed = this.lastSortMode < 0;
 		}
 		
-		[ this.row2pid, this.pid2row ] =
-			this.SortByPoints(this.matches, reversed, pushDownDropouts);
+		this.sort(this.comparePoints, this.getPointsSortableRepresentation(),
+			reversed, pushDownDropouts);
 	}
 
-	SortByPoints(matches, reversed = false, pushDownDropouts = true)
+	comparePoints(arr, a, b, reversed = false, pushDownDropouts = false)
 	{
-		// TODO: See this.sortByPoints (i.e. the non-static namesake).
-		
-		let row2pid = [];
-		let pid2row = [];
-		const tpa = matches.getTotalPointsArray();
-		tpa.sort((a,b) => {
-			let cmp = Math.sign(b[2] - a[2]);
-			if (cmp == 0) cmp = strCmp(a[1], b[1]);
-			if (pushDownDropouts)
-			{
-				if (this.matches.isDropout(a[0])) cmp += reversed ? -tpa.length : tpa.length;
-				if (this.matches.isDropout(b[0])) cmp -= reversed ? -tpa.length : tpa.length;
-			}
-			return reversed ? 1 - cmp : cmp;
+		// TODO: Remove the reversed param and let the caller handle it.
+		// TODO: Alter the design to use a hashing function (see python's key_to_cmp functool).
+		let cmp = 0;
+		if (pushDownDropouts)
+		{
+			cmp = a[3] - b[3];
+			if (cmp != 0) return cmp;
+		}
+		cmp = Math.sign(b[2] - a[2]); // Sort points in descending order.
+		if (cmp == 0) cmp = strCmp(a[1], b[1]); // Fall back on ascending name sort.
+		return reversed ? -cmp : cmp;
+	}
+
+	sort(compare, array, reversed = false, pushDownDropouts = false)
+	{
+		array.sort((a, b) => {
+			return compare(array, a, b, reversed, pushDownDropouts);
 		});
-		for (let i = 0; i < tpa.length; ++i)
+		this.row2pid = [];
+		this.pid2row = [];
+		for (let i = 0; i < array.length; ++i)
 		{
 			const row = i + 1;
-			row2pid[row] = tpa[i][0];
-			pid2row[tpa[i][0]] = row;
+			this.row2pid[row] = array[i][0];
+			this.pid2row[array[i][0]] = row;
 		}
-		return [ row2pid, pid2row ];
 	}
 
-	isSortedByPoints()
+	getPointsSortableRepresentation()
 	{
-		// TODO: This seems such an inefficient way of doing it, but
-		//	I can't think of a better way just yet....
+		// TODO: Using forEach could be better, given the fuzzy
+		//	nature of JS's array indexing scheme.
 		
-		const [ row2pid, pid2row ] = this.SortByPoints(this.matches);
-		
-		const cond = (pids, key) => {
-			return !this.matches.isDropout(pids[key]);
-		};
-		
-		const kk1 = keys(this.row2pid, cond);
-		const kk2 = keys(row2pid, cond);
-		const len = Math.min(kk1.length, kk2.length);
-		
-		// console.log(kk1, kk2);
-		
-		let feq = true;
-		let beq = true;
-		
-		for (let i = 0; i < len; ++i)
+		const array = [];
+		for (let i = 0; i < this.row2pid.length; ++i)
 		{
-			const k1f = kk1[i];
-			const k2f = kk2[i];
-			const k2r = kk2[len - 1 - i];
-			
-			if (this.row2pid[k1f] != row2pid[k2f]) feq = false;
-			if (this.row2pid[k1f] != row2pid[k2r]) beq = false;
-			
-			// console.log("[%.2d] %.2d.%.2d | %.2d.%.2d | %.2d.%.2d", i,
-			// 	k1f, this.row2pid[k1f], k2f, row2pid[k2f], k2r, row2pid[k2r]);
+			const pid = this.row2pid[i];
+			if (pid === undefined) continue;
+			array.push([
+				pid,
+				this.matches.pd[pid],
+				this.matches.getTotalPointsForPlayer(pid),
+				this.matches.isDropout(pid) ? 1 : 0,
+			]);
 		}
+		return array;
+	}
+
+	isSorted(compare, array, pushDownDropouts = true)
+	{
+		// Here, pushDownDropouts could also be re-labeled ignoreDropouts.
 		
-		return feq ? 3 : (beq ? -3 : 0);
+		// TODO: Adopt a consistent interpretation of negative sortModes.
+		//	The compare function will return a negative value if a < b.
+		//	This means that a negative number should represent the
+		//	normal sorting order. As it is now, lastSortMode is negative
+		//	if the reversed-of-normal sort order is true. This is why we
+		//	return the inverted sign here.
+		
+		const kk = keys(array, (_, key) => {
+			return !pushDownDropouts || !array[key][3];
+		});
+		
+		let sign = null;
+		for (let i = 1; i < kk.length; ++i)
+		{
+			const a = array[kk[i-1]];
+			const b = array[kk[i]];
+			
+			const cmp = compare(array, a, b, false, false);
+			if (sign === null) sign = Math.sign(cmp);
+			else if (sign != Math.sign(cmp)) return 0;
+		}
+		return -sign;
+	}
+
+	isSortedByPoints(pushDownDropouts = true)
+	{
+		// Here, pushDownDropouts could also be re-labeled ignoreDropouts.
+		
+		if (Math.abs(this.lastSortMode) != 3) return 0;
+		return this.isSorted(this.comparePoints,
+			this.getPointsSortableRepresentation(), pushDownDropouts);
 	}
 }
