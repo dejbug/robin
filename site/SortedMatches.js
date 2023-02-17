@@ -142,7 +142,11 @@ export class SortedMatches
 		}
 		else
 		{
-			if (this.isSortedByPoints() == Math.sign(this.lastSortMode))
+			// If the actual current table data is in the expected sorting
+			//	order (reflecting our lastSortMode), then just flip the
+			//	sorting order; otherwise resort it (so that lastSortMode
+			//	is respected).
+			if (this.isSortedByPoints(pushDownDropouts) == Math.sign(this.lastSortMode))
 				this.lastSortMode = -this.lastSortMode;
 			reversed = this.lastSortMode < 0;
 		}
@@ -231,17 +235,23 @@ export class SortedMatches
 		return -sign;
 	}
 
-	isSortedByPoints(pushDownDropouts = false)
+	isSortedByPoints(ignoreDropouts = true)
 	{
 		// We use this to determine if a resort is in needed. A resort
 		//	is needed if the lastSortMode no longer reflects the actual
 		//	table data. Currently we use this only with sortByPoints.
 		
-		// Here, pushDownDropouts could also be re-labeled ignoreDropouts.
+		// There are two ways to sort by points: with or without pushing
+		//	dropouts down. If they are pushed down, then we need to
+		//	skip them because their presence doesn't affect whether
+		//	the table is to be considered sorted or not. Note that we
+		//	call comparePoints with pushDownDropouts set to false
+		//	(to skip the little bit of unnecessary extra work) since it
+		//	will never see a dropout (its array arg is pre-cooked).
 		
 		if (Math.abs(this.lastSortMode) != 3) return 0;
 		let array = this.getPointsSortableRepresentation();
-		if (pushDownDropouts) array = array.filter((item) => { return !item[3]; });
+		if (ignoreDropouts) array = array.filter((item) => { return !item[3]; });
 		return this.isSorted(array, this.comparePoints, false, false);
 	}
 }
