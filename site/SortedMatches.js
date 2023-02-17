@@ -147,14 +147,16 @@ export class SortedMatches
 			reversed = this.lastSortMode < 0;
 		}
 		
-		this.sort(this.comparePoints, this.getPointsSortableRepresentation(),
-			reversed, pushDownDropouts);
+		this.sort(this.getPointsSortableRepresentation(),
+			this.comparePoints, reversed, pushDownDropouts);
 	}
 
-	comparePoints(arr, a, b, reversed = false, pushDownDropouts = false)
+	comparePoints(a, b, reversed = false, pushDownDropouts = false)
 	{
-		// TODO: Remove the reversed param and let the caller handle it.
-		// TODO: Alter the design to use a hashing function (see python's key_to_cmp functool).
+		// Need the reversed param here so push-down works regardless
+		//	of sorting order. The best way to get rid of it would be to use
+		//	different return values, but why bother?
+		
 		let cmp = 0;
 		if (pushDownDropouts)
 		{
@@ -166,10 +168,10 @@ export class SortedMatches
 		return reversed ? -cmp : cmp;
 	}
 
-	sort(compare, array, reversed = false, pushDownDropouts = false)
+	sort(array, compare, ...args)
 	{
 		array.sort((a, b) => {
-			return compare(array, a, b, reversed, pushDownDropouts);
+			return compare(a, b, ...args);
 		});
 		this.row2pid = [];
 		this.pid2row = [];
@@ -201,9 +203,16 @@ export class SortedMatches
 		return array;
 	}
 
-	isSorted(compare, array, pushDownDropouts = true)
+	isSorted(array, compare, ...args)
 	{
-		// Here, pushDownDropouts could also be re-labeled ignoreDropouts.
+		// Conceptually: Do a pairwise compare of the array items.
+		//		compare(array[0], array[1], ...args)
+		//		compare(array[1], array[2], ...args)
+		//	And store the results. If all the results have the same sign,
+		//	return the inverse of that sign. Return zero if not.
+		// Logically: If the array is sorted so that a < b then return
+		//	positive; else if array is sorted so that b < a, return
+		//	negative; else return zero.
 		
 		// TODO: Adopt a consistent interpretation of negative sortModes.
 		//	The compare function will return a negative value if a < b.
@@ -212,29 +221,27 @@ export class SortedMatches
 		//	if the reversed-of-normal sort order is true. This is why we
 		//	return the inverted sign here.
 		
-		const kk = keys(array, (_, key) => {
-			return !pushDownDropouts || !array[key][3];
-		});
-		
 		let sign = null;
-		for (let i = 1; i < kk.length; ++i)
+		for (let i = 1; i < array.length; ++i)
 		{
-			const a = array[kk[i-1]];
-			const b = array[kk[i]];
-			
-			const cmp = compare(array, a, b, false, false);
+			const cmp = compare(array[i-1], array[i], ...args);
 			if (sign === null) sign = Math.sign(cmp);
 			else if (sign != Math.sign(cmp)) return 0;
 		}
 		return -sign;
 	}
 
-	isSortedByPoints(pushDownDropouts = true)
+	isSortedByPoints(pushDownDropouts = false)
 	{
+		// We use this to determine if a resort is in needed. A resort
+		//	is needed if the lastSortMode no longer reflects the actual
+		//	table data. Currently we use this only with sortByPoints.
+		
 		// Here, pushDownDropouts could also be re-labeled ignoreDropouts.
 		
 		if (Math.abs(this.lastSortMode) != 3) return 0;
-		return this.isSorted(this.comparePoints,
-			this.getPointsSortableRepresentation(), pushDownDropouts);
+		let array = this.getPointsSortableRepresentation();
+		if (pushDownDropouts) array = array.filter((item) => { return !item[3]; });
+		return this.isSorted(array, this.comparePoints, false, false);
 	}
 }

@@ -161,7 +161,7 @@ export class CrossTable
 	{
 		const cls = `${this.prefix}resort`;
 		const th = this.table.find("th").last();
-		if (this.model.isSortedByPoints())
+		if (this.model.isSortedByPoints(this.opt.pushDownDropouts))
 			th.removeClass(cls);
 		else
 			th.addClass(cls);
