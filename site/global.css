@@ -8,9 +8,11 @@ table > tr > td:nth-child(1) { font-weight: bold; }
 
 .data-cc-dropout, .data-cc-dropout.crosshatch {
 	background-color: white; color: transparent;
-	background-image: url(crossthrough.svg); background-size: 1em;;
+	background-image: url(crossthrough.svg);
+	background-size: 1em; background-repeat: round;
+	border: none;
 }
-tr.data-cc-dropout td:nth-child(2) { color: lightgrey; }
+tr.data-cc-dropout td:nth-child(2) { color: grey; }
 td[data-side=b].data-cc-dropout::after { color: transparent; }
 
 .data-cc-celltype-inert { cursor: not-allowed; }
