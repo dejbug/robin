@@ -3,6 +3,27 @@ import { CrossTableHighlighter } from "./CrossTableHighlighter.js";
 import { Matches } from "./Matches.js";
 import { SortedMatches } from "./SortedMatches.js";
 
+// TODO: Add a player entry form. We need to be able to
+//	quickly add the players of our club. Maybe add an
+//	interface to the DWZ API of the Schachbund. Think
+//	drag and drop rather than tippedy-type.
+
+// TODO: Add a pairings table. Including the pairings in the
+//	cross table could be too confusing, since the tables are
+//	usually numbered rather than alphabetically enumerated.
+
+// TODO: Add a remote control page to be provided the players
+//	via a tablet. A player would click the table number where
+//	they played and then click the game result.
+
+// TODO: Encapsulate the fundamental table-geometry-based
+//	layer into a separate class? (Remember not to optimize
+//	too early! Thinking about too much at once will not get
+//	you very far. Abstract the details away behind nice and
+//	easy-to-remember interfaces and forget about the
+//	implementation. Trust your code to be efficient enough,
+//	at least for the time being.)
+
 export class CrossTable
 {
 	constructor(paneId)
@@ -41,8 +62,6 @@ export class CrossTable
 
 	create(count)
 	{
-		// const suits = ["&spades;", "&clubs;", "&hearts;", "&diams;"];
-		
 		const cc = {
 			inert : `${this.prefix}celltype-inert`,
 			sortable : `${this.prefix}celltype-sortable`,
@@ -71,16 +90,7 @@ export class CrossTable
 			{
 				let td = $("<td>").text(null);
 				if (j < count && i != j) td.addClass(cc.cell)
-				else
-				{
-					if (i == j)
-					{
-						td.addClass("crosshatch");
-						// td.css("color", "lightgrey").html(suits[i % suits.length]);
-						// td.html("&middot;");
-						// td.html("&there4;");
-					}
-				}
+				else if (i == j) td.addClass("crosshatch");
 				td.addClass(cc.inert).appendTo(tr);
 			}
 			
@@ -231,6 +241,16 @@ export class CrossTable
 
 	onMouseDown(e)
 	{
+		// TODO: Distinguish between player clicks and player index/id clicks.
+		//	The latter should be handled as usual on left click but may be
+		//	optionally treated as round ids on middle clicks. Clicking on a
+		//	round id could highlight the score cells for the pairings of that round.
+		//	This would cut down on our layout real estate since there wouldn't
+		//	be a need for an extra pairings table. Instead of an empty score cell,
+		//	yet to be filled with the match result, it could be filled with the table
+		//	number on which the player is going to play. The black-or-white mark
+		//	needs to be styled more prominently though.
+		
 		e.preventDefault();
 		
 		const cc = getCellCoords(e.target);
@@ -278,24 +298,36 @@ export class CrossTable
 		// non-highlightable. This is implicitly working for now,
 		// b/c our background images have a hard-coded background
 		// color (which is drawn on top of the cells' background).
+		// In reality the highlight is set though but is hidden.
 		
 		const pid = this.model.row2pid[row];
-		// console.log(`onPlayerClicked(e, ${row} (${pid}), '${text}', ${button})`);
 		if (button == 0) this.hi.togglePlayerHighlight(pid);
 		if (button == 1) this.togglePlayerEnabled(pid);
 	}
 
 	onScoreClicked(e, row, col, text, button)
 	{
+		// TODO: Make a middle click toggle through the possible
+		//	values of a cell: a. empty/round-id, b. 0, c. 1/2, d. 1.
+		//	Note that we must not automatically sort the table
+		//	while interacting with it: a cell shall not be pulled from
+		//	under our cursor mid-entry. This makes an extraneous
+		//	pairings table more attractive.
+		
+		// TODO: When a score is updated, via remote-control, make
+		//	it pulse once to draw attention to it.
+		
+		// TODO: Add another sorting mode (row/col swap-sort) so
+		//	we can animate the changing table (slowly, nicely) to
+		//	visualize the rank-shuffling going on.
+		
 		const rowpid = this.model.row2pid[row];
 		const colpid = this.model.row2pid[col];
-		// console.log(`onScoreClicked(e, ${row} (${rowpid}), ${col} (${colpid}), '${text}', ${button})`);
 		this.hi.toggleMatchHighlight(rowpid, colpid);
 	}
 
 	onIdHeaderClicked(e)
 	{
-		// console.log("onIdHeaderClicked(e)");
 		if (!this.model) return;
 		this.model.sortById(null, this.opt.pushDownDropouts);
 		this.update();
@@ -303,7 +335,6 @@ export class CrossTable
 
 	onNameHeaderClicked(e)
 	{
-		// console.log("onNameHeaderClicked(e)");
 		if (!this.model) return;
 		this.model.sortByName(null, this.opt.pushDownDropouts);
 		this.update();
@@ -311,7 +342,6 @@ export class CrossTable
 
 	onPointsHeaderClicked(e)
 	{
-		// console.log("onPointsHeaderClicked(e)");
 		if (!this.model) return;
 		this.model.sortByPoints(null, this.opt.pushDownDropouts, this.opt.smartResort);
 		this.update();
@@ -383,7 +413,6 @@ export class CrossTable
 		this.setColClass(col, "dropout", index < 0);
 		
 		// All of these things might be affected by players dropping in/out.
-		
 		this.fillIds();
 		this.fillPoints();
 		this.fillPointsResortIndicator();

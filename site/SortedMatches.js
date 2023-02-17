@@ -5,6 +5,8 @@ import { strCmp, keys } from "./tools.js";
 //	this is an indication of muddled thinking. Maybe the muddled
 //	thinking precludes a better design.
 
+// TODO: Make this a proper subclass of Matches?
+
 export class SortedMatches
 {
 	constructor(matches)
