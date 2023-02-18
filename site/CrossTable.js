@@ -103,33 +103,30 @@ export class CrossTable
 
 	fill()
 	{
-		// TODO: Error if players.length > this.count ?
-		// TODO: We always have a pid2row now. Don't test for presence.
-		
 		// TODO: Remove these shorthands?
+		const matches = this.model.matches;
 		const players = this.model.matches.pa;
-		const matches = this.model.matches.ma;
 		const pid2row = this.model.pid2row;
 		
 		for (let i = 0; i < players.length; ++i)
 		{
 			const p = players[i];
-			const row = pid2row ? pid2row[p[0]] : i + 1;
+			const row = pid2row[p[0]];
 			const cell = $(this.getNameCell(row));
 			cell.text(p[1]);
 		}
 		
-		for (let i = 0; i < matches.length; ++i)
+		for (let i = 0; i < matches.matchesCount; ++i)
 		{
-			const m = this.model.matches.getMatchInfoByIndex(i);
-			const whiteRow = pid2row ? pid2row[m[0]] : m[0];
-			const blackRow = pid2row ? pid2row[m[1]] : m[1];
+			const m = matches.getMatchInfoByIndex(i);
+			const whiteRow = pid2row[m[0]];
+			const blackRow = pid2row[m[1]];
 			const whiteCell = $(this.getScoreCell(whiteRow, blackRow));
 			const blackCell = $(this.getScoreCell(blackRow, whiteRow));
 			whiteCell.html(m.ws);
 			blackCell.html(m.bs);
-			whiteCell.attr("data-res", m.wr);
-			blackCell.attr("data-res", m.br);
+			
+			// TODO: Turn these into CSS classes instead? Why did I use attributes?
 			whiteCell.attr("data-side", "w");
 			blackCell.attr("data-side", "b");
 		}
@@ -226,26 +223,9 @@ export class CrossTable
 
 	sumRowPoints(row)
 	{
-		// TODO: Do this with the internal data since accessing the DOM might be
-		//	too expensive. Don't forget to use the pid2row LUT!
-		
 		if (row < 1 || row > this.count) return null;
-		
 		const pid = this.model.row2pid[row];
-		if (this.model.matches.dropouts.indexOf(pid) >= 0) return null;
-		
-		let points = 0;
-		for (let col = 1; col <= this.count; ++col)
-		{
-			if (row == col) continue;
-			const pid = this.model.row2pid[col];
-			if (this.model.matches.dropouts.indexOf(pid) >= 0) continue;
-			
-			const cell = this.getScoreCell(row, col);
-			const val = parseFloat($(cell).attr("data-res"));
-			if (val) points += val;
-		}
-		return points;
+		return this.model.matches.getTotalPointsForPlayer(pid);
 	}
 
 	onMouseDown(e)
@@ -303,6 +283,10 @@ export class CrossTable
 
 	onPlayerIndexClicked(e, row, text, button)
 	{
+		// TODO: Decide what to do when a player index is selected
+		//	and a round was meant to be selected but the player
+		//	corresponding to the index happens to be a dropout.
+		
 		if (e.button == 0)
 			return this.onPlayerClicked(e, row, text, button);
 		this.hi.toggleRoundHighlight(row);
@@ -439,16 +423,11 @@ export class CrossTable
 	toggleScoreState(row, col)
 	{
 		// this.hi.clearMatchHighlights(row, col);
-		
-		const cell = $(this.getScoreCell(row, col));
-		const whiteScoreClicked = cell.attr("data-side") == "w";
-		
 		const rowpid = this.model.row2pid[row];
 		const colpid = this.model.row2pid[col];
 		const match = this.model.matches.getMatchInfo(rowpid, colpid);
+		const whiteScoreClicked = rowpid == match[0];
 		match.toggleResult(whiteScoreClicked);
-		
-		// FIXME: We need to update a single cell here.
-		this.update();
+		this.update();	// FIXME: We need to update a single cell here.
 	}
 }

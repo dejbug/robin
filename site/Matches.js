@@ -26,12 +26,9 @@ export class Matches
 			const m = this.ma[i];
 			madd(this.md, m[0], m[1], i);
 			madd(this.md, m[1], m[0], i);
-			// if (m[0] in this.md) this.md[m[0]].push(i);
-			// else this.md[m[0]] = [i];
-			// if (m[1] in this.md) this.md[m[1]].push(i);
-			// else this.md[m[1]] = [i];
 		}
-		this.count = this.pd.length;
+		this.count = this.pd.length;	// FIXME: Rename this to playerCount
+		this.matchesCount = this.ma.length;
 		this.dropouts = [];
 	}
 
