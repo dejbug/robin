@@ -58,6 +58,7 @@ export class Matches
 		for (let i = 0; i < this.ma.length; ++i)
 		{
 			const m = this.ma[i];
+			if (m[2] !== 0 && m[2] !== 0.5 && m[2] !== 1) continue;
 			if (m[0] == pid && !this.isDropout(m[1])) p += m[2];
 			else if (m[1] == pid && !this.isDropout(m[0])) p += (1 - m[2]);
 		}

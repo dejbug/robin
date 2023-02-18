@@ -2,6 +2,11 @@ import { getCellCoords } from "./tools.js";
 import { CrossTableHighlighter } from "./CrossTableHighlighter.js";
 import { Matches } from "./Matches.js";
 import { SortedMatches } from "./SortedMatches.js";
+import { berger } from "./berger.js";
+
+// TODO: Put more effort into your choice of a palette. It must
+//	be legible on the projector screen. Best to add a color
+//	picker and some config controls for text size, font fam, etc.
 
 // TODO: Middle buttons are not available on e.g. smartphones.
 //	Decide how to handle the secondary click on those devices
@@ -40,6 +45,7 @@ export class CrossTable
 		this.table = null;
 		this.model = null;
 		this.count = 0;
+		this.lastRoundHighlightIndex = 0;
 		this.hi = new CrossTableHighlighter(this);
 		this.opt = {
 			keepLastHighlight : true,
@@ -299,7 +305,7 @@ export class CrossTable
 			if (!this.model.matches.isDropout(pid))
 			{
 				const row2index = this.model.row2index();
-				return this.hi.toggleRoundHighlight(row2index[row]);
+				return this.toggleRoundHighlight(row2index[row]);
 			}
 			if (this.opt.dropoutColSensitive)
 				return this.onPlayerClicked(e, row, text, button);
@@ -443,5 +449,20 @@ export class CrossTable
 		const whiteScoreClicked = rowpid == match[0];
 		match.toggleResult(whiteScoreClicked);
 		this.update();	// FIXME: We need to update a single cell here.
+	}
+
+	toggleRoundHighlight(index)
+	{
+		if (this.lastRoundHighlightIndex == index)
+		{
+			this.hi.setRoundHighlight(null);
+			this.lastRoundHighlightIndex = 0;
+			return;
+		}
+		this.lastRoundHighlightIndex = index;
+		
+		const playerCount = this.model.matches.pa.length;
+		const rounds = berger(playerCount);
+		this.hi.setRoundHighlight(rounds[index]);
 	}
 }

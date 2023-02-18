@@ -1,3 +1,6 @@
+// TODO: Add a facility to remember multiple highlights.
+// TODO: Maybe add highlight groups? Like transparency layers.
+
 export class CrossTableHighlighter
 {
 	constructor(table)
@@ -6,6 +9,9 @@ export class CrossTableHighlighter
 		
 		this.cellHighlightClass = `${this.table.prefix}highlight-match`;
 		this.playerHighlightClass = `${this.table.prefix}highlight-player`;
+		// this.roundHighlightClass = `${this.table.prefix}highlight-round`;
+		this.roundHighlightWhiteClass = `${this.table.prefix}highlight-round-white`;
+		this.roundHighlightBlackClass = `${this.table.prefix}highlight-round-black`;
 		
 		this.lastCellHighlight = null;
 		this.lastRowHighlight = null;
@@ -13,6 +19,8 @@ export class CrossTableHighlighter
 		
 		this.lastPlayerHighlight = null;
 		this.lastMatchHighlight = null;
+		
+		this.lastRoundHighlight = null;
 	}
 
 	setPlayerHighlight(pid, on = true)
@@ -93,6 +101,8 @@ export class CrossTableHighlighter
 				this.setCellHighlight(row, col);
 			}
 		}
+		if (this.lastRoundHighlight !== null)
+			this.setRoundHighlight(this.lastRoundHighlight);
 	}
 
 	setRowHighlight(row, on = true)
@@ -155,9 +165,71 @@ export class CrossTableHighlighter
 		const { pid1 : lastPid1, pid2 : lastPid2 } = this.lastMatchHighlight;
 		this.setMatchHighlight(lastPid1, lastPid2, false);
 	}
-
-	toggleRoundHighlight(index)
+	
+	clearAllHighlights()
 	{
-		console.log("toggleRoundHighlight", index);
+		// TODO: Incomplete. Not tested yet and probably should
+		//	merge this with reset() .
+		
+		const count = this.table.model.matches.pa.length;
+		for (let row = 0; row < count + 1; ++row)
+			for (let col = 1; col < count + 3; ++col)
+			{
+				const cell = $(this.table.getCell(i, j));
+				cell.removeClass(this.cellHighlightClass);
+				cell.removeClass(this.playerHighlightClass);
+				// cell.removeClass(this.roundHighlightClass);
+				cell.removeClass(this.roundHighlightWhiteClass);
+				cell.removeClass(this.roundHighlightBlackClass);
+			}
+	}
+
+	setRoundHighlight(matches, on = true)
+	{
+		// TODO: Set a highlight on the round index too.
+		
+		if (this.lastRoundHighlight !== null)
+		{
+			const lastRoundHighlight = this.lastRoundHighlight;
+			this.lastRoundHighlight = null;
+			this.setRoundHighlight(lastRoundHighlight, false);
+		}
+		
+		if (matches === null) return;
+		
+		const playerCount = this.table.model.matches.pa.length;
+		
+		matches.forEach(([wpid, bpid]) => {
+			const wbye = wpid > playerCount;
+			const bbye = bpid > playerCount;
+			
+			const wdrop = this.table.model.matches.isDropout(wpid);
+			const bdrop = this.table.model.matches.isDropout(bpid);
+			
+			const row = this.table.model.pid2row[wpid];
+			const col = this.table.model.pid2row[bpid];
+			
+			// console.log({wpid, bpid, row, col, wbye, bbye, wdrop, bdrop});
+			
+			if (wdrop || bdrop)
+			{
+				// Do nothing.
+			}
+			else if (wbye || bbye)
+			{
+				// TODO: Maybe add a roundHighlightByeClass ?
+			}
+			else
+			{
+				const w = $(this.table.getScoreCell(row, col));
+				if (on) w.addClass(this.roundHighlightWhiteClass);
+				else w.removeClass(this.roundHighlightWhiteClass);
+				const b = $(this.table.getScoreCell(col, row));
+				if (on) b.addClass(this.roundHighlightBlackClass);
+				else b.removeClass(this.roundHighlightBlackClass);
+			}
+		});
+		
+		this.lastRoundHighlight = on ? matches.slice(0) : null;
 	}
 }
