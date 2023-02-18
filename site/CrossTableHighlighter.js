@@ -97,6 +97,8 @@ export class CrossTableHighlighter
 
 	setRowHighlight(row, on = true)
 	{
+		// TODO: Use CrossTable.SetRowClass?
+		
 		this.lastRowHighlight = on ? row : null;
 		
 		const tr = $(this.table.getCell(row, 0)).parent();
@@ -106,6 +108,8 @@ export class CrossTableHighlighter
 
 	setColHighlight(col, on = true)
 	{
+		// TODO: Use CrossTable.SetColClass?
+		
 		this.lastColHighlight = on ? col : null;
 		
 		for (let row = 0; row <= this.table.count; ++row)
@@ -143,5 +147,17 @@ export class CrossTableHighlighter
 	toggleCellHighlight(row_, col_)
 	{
 		throw new Error("Not implemented yet.");
+	}
+
+	clearMatchHighlights()
+	{
+		if (this.lastMatchHighlight === null) return;
+		const { pid1 : lastPid1, pid2 : lastPid2 } = this.lastMatchHighlight;
+		this.setMatchHighlight(lastPid1, lastPid2, false);
+	}
+
+	toggleRoundHighlight(index)
+	{
+		console.log("toggleRoundHighlight", index);
 	}
 }

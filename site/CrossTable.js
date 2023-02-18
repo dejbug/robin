@@ -1,4 +1,4 @@
-import { getCellCoords, scoreToString } from "./tools.js";
+import { getCellCoords } from "./tools.js";
 import { CrossTableHighlighter } from "./CrossTableHighlighter.js";
 import { Matches } from "./Matches.js";
 import { SortedMatches } from "./SortedMatches.js";
@@ -23,6 +23,8 @@ import { SortedMatches } from "./SortedMatches.js";
 //	easy-to-remember interfaces and forget about the
 //	implementation. Trust your code to be efficient enough,
 //	at least for the time being.)
+
+// TODO: In other words: Inflate the API to be more user friendly!
 
 export class CrossTable
 {
@@ -89,18 +91,25 @@ export class CrossTable
 			for (let j = 0; j < count + 1; ++j)
 			{
 				let td = $("<td>").text(null);
-				if (j < count && i != j) td.addClass(cc.cell)
-				else if (i == j) td.addClass("crosshatch");
-				td.addClass(cc.inert).appendTo(tr);
+				if (i == j) td.addClass(cc.inert).addClass("crosshatch");
+				else if (j >= count) td.addClass(cc.inert);
+				else td.addClass(cc.cell);
+				td.appendTo(tr);
 			}
 			
 			tr.appendTo(this.table);
 		}
 	}
 
-	fill(players, matches, pid2row)
+	fill()
 	{
 		// TODO: Error if players.length > this.count ?
+		// TODO: We always have a pid2row now. Don't test for presence.
+		
+		// TODO: Remove these shorthands?
+		const players = this.model.matches.pa;
+		const matches = this.model.matches.ma;
+		const pid2row = this.model.pid2row;
 		
 		for (let i = 0; i < players.length; ++i)
 		{
@@ -112,15 +121,15 @@ export class CrossTable
 		
 		for (let i = 0; i < matches.length; ++i)
 		{
-			const m = matches[i];
+			const m = this.model.matches.getMatchInfoByIndex(i);
 			const whiteRow = pid2row ? pid2row[m[0]] : m[0];
 			const blackRow = pid2row ? pid2row[m[1]] : m[1];
 			const whiteCell = $(this.getScoreCell(whiteRow, blackRow));
 			const blackCell = $(this.getScoreCell(blackRow, whiteRow));
-			whiteCell.html(scoreToString(m[2]));
-			whiteCell.attr("data-res", m[2]);
-			blackCell.html(scoreToString(1 - m[2]));
-			blackCell.attr("data-res", 1 - m[2]);
+			whiteCell.html(m.ws);
+			blackCell.html(m.bs);
+			whiteCell.attr("data-res", m.wr);
+			blackCell.attr("data-res", m.br);
 			whiteCell.attr("data-side", "w");
 			blackCell.attr("data-side", "b");
 		}
@@ -204,7 +213,7 @@ export class CrossTable
 		if (!this.model) return false;
 		this.remove();
 		this.create(this.model.matches.pa.length);
-		this.fill(this.model.matches.pa, this.model.matches.ma, this.model.pid2row);
+		this.fill();
 		this.attach();
 		if (this.opt.keepLastHighlight)
 			this.hi.apply(this.opt.keepLastHighlightSorted);
@@ -234,7 +243,7 @@ export class CrossTable
 			
 			const cell = this.getScoreCell(row, col);
 			const val = parseFloat($(cell).attr("data-res"));
-			points += parseFloat(val);
+			if (val) points += val;
 		}
 		return points;
 	}
@@ -247,7 +256,7 @@ export class CrossTable
 		//	round id could highlight the score cells for the pairings of that round.
 		//	This would cut down on our layout real estate since there wouldn't
 		//	be a need for an extra pairings table. Instead of an empty score cell,
-		//	yet to be filled with the match result, it could be filled with the table
+		//	yet to be filled with the match result, it could be filled with the desk
 		//	number on which the player is going to play. The black-or-white mark
 		//	needs to be styled more prominently though.
 		
@@ -268,7 +277,7 @@ export class CrossTable
 					this.onPointsHeaderClicked(e);
 				
 				else if (cc.col >= 2 && cc.col - 1 <= this.count)
-					this.onPlayerClicked(e, cc.col - 1,
+					this.onPlayerIndexClicked(e, cc.col - 1,
 						this.getNameCell(cc.col - 1).innerText,
 						e.originalEvent.button);
 			}
@@ -276,6 +285,7 @@ export class CrossTable
 		else if (cc.row >= 1)
 		{
 			if (cc.col == 0)
+				// this.onPlayerIndexClicked(e, cc.row,
 				this.onPlayerClicked(e, cc.row,
 					this.getNameCell(cc.row).innerText,
 					e.originalEvent.button);
@@ -289,6 +299,13 @@ export class CrossTable
 				this.onScoreClicked(e, cc.row, cc.col - 1,
 					e.target.innerText, e.originalEvent.button);
 		}
+	}
+
+	onPlayerIndexClicked(e, row, text, button)
+	{
+		if (e.button == 0)
+			return this.onPlayerClicked(e, row, text, button);
+		this.hi.toggleRoundHighlight(row);
 	}
 
 	onPlayerClicked(e, row, text, button)
@@ -307,23 +324,23 @@ export class CrossTable
 
 	onScoreClicked(e, row, col, text, button)
 	{
-		// TODO: Make a middle click toggle through the possible
-		//	values of a cell: a. empty/round-id, b. 0, c. 1/2, d. 1.
-		//	Note that we must not automatically sort the table
-		//	while interacting with it: a cell shall not be pulled from
-		//	under our cursor mid-entry. This makes an extraneous
-		//	pairings table more attractive.
+		// TODO: When a score is updated make it pulse to draw
+		//	attention to it. When it is toggled via remote-control
+		//	auto-re-sort the table? Don't re-sort when updated
+		//	from within the crosstable or warp the cursor to stay
+		//	over the cell (this could be too confusing though).
 		
-		// TODO: When a score is updated, via remote-control, make
-		//	it pulse once to draw attention to it.
-		
-		// TODO: Add another sorting mode (row/col swap-sort) so
-		//	we can animate the changing table (slowly, nicely) to
-		//	visualize the rank-shuffling going on.
-		
-		const rowpid = this.model.row2pid[row];
-		const colpid = this.model.row2pid[col];
-		this.hi.toggleMatchHighlight(rowpid, colpid);
+		if (e.button == 0)
+		{
+			const rowpid = this.model.row2pid[row];
+			const colpid = this.model.row2pid[col];
+			this.hi.toggleMatchHighlight(rowpid, colpid);
+		}
+		else if (e.button == 1)
+		{
+			// this.hi.clearMatchHighlights();
+			this.toggleScoreState(row, col);
+		}
 	}
 
 	onIdHeaderClicked(e)
@@ -417,5 +434,21 @@ export class CrossTable
 		this.fillPoints();
 		this.fillPointsResortIndicator();
 		this.fillDropouts(true);
+	}
+
+	toggleScoreState(row, col)
+	{
+		// this.hi.clearMatchHighlights(row, col);
+		
+		const cell = $(this.getScoreCell(row, col));
+		const whiteScoreClicked = cell.attr("data-side") == "w";
+		
+		const rowpid = this.model.row2pid[row];
+		const colpid = this.model.row2pid[col];
+		const match = this.model.matches.getMatchInfo(rowpid, colpid);
+		match.toggleResult(whiteScoreClicked);
+		
+		// FIXME: We need to update a single cell here.
+		this.update();
 	}
 }

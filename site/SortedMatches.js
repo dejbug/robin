@@ -7,6 +7,10 @@ import { strCmp, keys } from "./tools.js";
 
 // TODO: Make this a proper subclass of Matches?
 
+// TODO: Add another sorting method (row/col swap-sort) so
+//	we can animate the changing table (slowly, nicely) to
+//	visualize the rank-shuffling going on.
+
 export class SortedMatches
 {
 	constructor(matches)

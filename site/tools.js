@@ -13,11 +13,11 @@ export function strCmp(a_, b_)
 	return 0;
 }
 
-export function scoreToString(val)
+export function scoreToString(val, nice=false)
 {
-	if (val == 0 || val == 1) return "" + val;
-	if (val == 0.5) return "&frac12;";
-	return null;
+	if (val === 0 || val === 1) return "" + val;
+	if (val === 0.5) return nice ? "&frac12;" : "0.5";
+	return "";
 }
 
 export function mouseButtonFlagString(event)
