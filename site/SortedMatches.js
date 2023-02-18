@@ -258,4 +258,21 @@ export class SortedMatches
 		if (ignoreDropouts) array = array.filter((item) => { return !item[3]; });
 		return this.isSorted(array, this.comparePoints, false, false);
 	}
+
+	row2index()
+	{
+		// TODO: Can we make this an array? It depends on whether
+		//	keeping it updated is more easy and efficient.
+		
+		let ii = {};
+		for (let row = 1, index = 1; row <= this.matches.pa.length; ++row)
+		{
+			const pid = this.row2pid[row];
+			if (this.matches.isDropout(pid))
+				ii[row] = null;
+			else
+				ii[row] = index++;
+		}
+		return ii;
+	}
 }

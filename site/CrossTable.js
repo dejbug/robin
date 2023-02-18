@@ -3,6 +3,11 @@ import { CrossTableHighlighter } from "./CrossTableHighlighter.js";
 import { Matches } from "./Matches.js";
 import { SortedMatches } from "./SortedMatches.js";
 
+// TODO: Middle buttons are not available on e.g. smartphones.
+//	Decide how to handle the secondary click on those devices
+//	(long press would count as a right click, no?). Maybe just
+//	avoid it and enforce the use of extra HTML buttons.
+
 // TODO: Add a player entry form. We need to be able to
 //	quickly add the players of our club. Maybe add an
 //	interface to the DWZ API of the Schachbund. Think
@@ -43,6 +48,7 @@ export class CrossTable
 			showPidsInsteadOfIndex : false,
 			pushDownDropouts : true,
 			smartResort : true,
+			dropoutColSensitive : false,
 		};
 	}
 
@@ -281,13 +287,23 @@ export class CrossTable
 
 	onPlayerIndexClicked(e, row, text, button)
 	{
-		// TODO: Decide what to do when a player index is selected
-		//	and a round was meant to be selected but the player
-		//	corresponding to the index happens to be a dropout.
+		// This works nicely since for x players there are at most
+		//	x rounds, so clicking dropouts should never trigger
+		//	a round higlight event.
 		
 		if (e.button == 0)
 			return this.onPlayerClicked(e, row, text, button);
-		this.hi.toggleRoundHighlight(row);
+		else if (e.button == 1)
+		{
+			const pid = this.model.row2pid[row];
+			if (!this.model.matches.isDropout(pid))
+			{
+				const row2index = this.model.row2index();
+				return this.hi.toggleRoundHighlight(row2index[row]);
+			}
+			if (this.opt.dropoutColSensitive)
+				return this.onPlayerClicked(e, row, text, button);
+		}
 	}
 
 	onPlayerClicked(e, row, text, button)
