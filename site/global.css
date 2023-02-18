@@ -13,15 +13,15 @@ table > tr > td:nth-child(1) { font-weight: bold; }
 	border: none;
 }
 tr.data-cc-dropout td:nth-child(2) { color: grey; }
-td[data-side=b].data-cc-dropout::after { color: transparent; }
+td.data-cc-side-b.data-cc-dropout::after { color: transparent; }
 
 .data-cc-celltype-inert { cursor: not-allowed; }
 .data-cc-celltype-sortable { cursor: ns-resize; }
 .data-cc-celltype-player { cursor: pointer; }
 .data-cc-celltype-cell { cursor: cell; }
 
-td[data-side=b] { position: relative; background-clip: padding-box; }
-td[data-side=b]::after {
+td.data-cc-side-b { position: relative; background-clip: padding-box; }
+td.data-cc-side-b::after {
 	content: "s";
 	color: grey;
 	font-size: 60%;

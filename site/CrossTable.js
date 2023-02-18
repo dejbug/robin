@@ -125,10 +125,8 @@ export class CrossTable
 			const blackCell = $(this.getScoreCell(blackRow, whiteRow));
 			whiteCell.html(m.ws);
 			blackCell.html(m.bs);
-			
-			// TODO: Turn these into CSS classes instead? Why did I use attributes?
-			whiteCell.attr("data-side", "w");
-			blackCell.attr("data-side", "b");
+			whiteCell.addClass(`${this.prefix}side-w`);
+			blackCell.addClass(`${this.prefix}side-b`);
 		}
 		
 		this.fillIds();
