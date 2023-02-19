@@ -234,6 +234,11 @@ export class CrossTableHighlighter
 				else w.removeClass(this.roundHighlightDeskClass);
 				if (on) b.addClass(this.roundHighlightDeskClass);
 				else b.removeClass(this.roundHighlightDeskClass);
+				
+				if (on)
+				{
+					++desk;
+				}
 			}
 			else
 			{
