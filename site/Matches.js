@@ -12,6 +12,9 @@ export class Matches
 		this.pd = [];			// players dict
 		for (let i = 0; i < this.pa.length; ++i)
 		{
+			// TODO: Maybe just renormalize? Assign consecutive
+			//	integers 1, 2, ... as pids ? Checking for pid inclusion
+			//	could be done with ranges rather than with find().
 			const p = this.pa[i];
 			this.pd[p[0]] = p[1];
 		}
@@ -27,7 +30,8 @@ export class Matches
 			madd(this.md, m[0], m[1], i);
 			madd(this.md, m[1], m[0], i);
 		}
-		this.count = this.pd.length;	// FIXME: Rename this to playerCount
+		this.count = this.pd.length;	// FIXME: Remove this. Use playerCount.
+		this.playerCount = this.pd.length;
 		this.matchesCount = this.ma.length;
 		this.dropouts = [];
 	}
@@ -85,19 +89,35 @@ export class Matches
 
 	addDropout(pid)
 	{
+		throw new Error("Not implemented yet.");
 	}
 
 	removeDropout(pid)
 	{
+		throw new Error("Not implemented yet.");
+	}
+
+	isPid(pid)
+	{
+		// FIXME: Reindex the the player pids so that they
+		//	can be range-checked rather than looped through.
+		// 	E.g.: return pid >= 1 && pid < this.playerCount;
+		//	If we need the original pids (as passed us from the
+		//	server, then store them somewhere).
+		
+		pid = parseInt(pid);
+		return Object.keys(this.pd).some(key => { return key == pid });
 	}
 
 	getMatchIndex(p1, p2)
 	{
+		if (!this.isPid(p1) || !this.isPid(p2)) return null;
 		return this.md[p1][p2];
 	}
 
 	getMatch(p1, p2)
 	{
+		if (!this.isPid(p1) || !this.isPid(p2)) return null;
 		const i = this.getMatchIndex(p1, p2);
 		return this.getMatchByIndex(i);
 	}
@@ -109,6 +129,7 @@ export class Matches
 
 	getMatchInfo(p1, p2)
 	{
+		if (!this.isPid(p1) || !this.isPid(p2)) return null;
 		const i = this.getMatchIndex(p1, p2);
 		return this.getMatchInfoByIndex(i);
 	}
@@ -116,6 +137,7 @@ export class Matches
 	getMatchInfoByIndex(i)
 	{
 		const m = this.getMatchByIndex(i);
+		if (m === null || m === undefined) return null;
 		return {
 			m, 0: m[0], 1: m[1], 2: m[2],
 			w: m[0],

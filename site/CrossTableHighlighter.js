@@ -12,6 +12,7 @@ export class CrossTableHighlighter
 		// this.roundHighlightClass = `${this.table.prefix}highlight-round`;
 		this.roundHighlightWhiteClass = `${this.table.prefix}highlight-round-white`;
 		this.roundHighlightBlackClass = `${this.table.prefix}highlight-round-black`;
+		this.roundHighlightDeskClass = `${this.table.prefix}highlight-round-desk`;
 		
 		this.lastCellHighlight = null;
 		this.lastRowHighlight = null;
@@ -184,9 +185,10 @@ export class CrossTableHighlighter
 			}
 	}
 
-	setRoundHighlight(matches, on = true)
+	setRoundHighlight(pairings, on = true)
 	{
 		// TODO: Set a highlight on the round index too.
+		// FIXME: The code is messy. Clean it up.
 		
 		if (this.lastRoundHighlight !== null)
 		{
@@ -195,11 +197,13 @@ export class CrossTableHighlighter
 			this.setRoundHighlight(lastRoundHighlight, false);
 		}
 		
-		if (matches === null) return;
+		if (pairings === null) return;
 		
 		const playerCount = this.table.model.matches.pa.length;
 		
-		matches.forEach(([wpid, bpid]) => {
+		let desk = 1;
+		
+		pairings.forEach(([wpid, bpid]) => {
 			const wbye = wpid > playerCount;
 			const bbye = bpid > playerCount;
 			
@@ -209,15 +213,27 @@ export class CrossTableHighlighter
 			const row = this.table.model.pid2row[wpid];
 			const col = this.table.model.pid2row[bpid];
 			
-			// console.log({wpid, bpid, row, col, wbye, bbye, wdrop, bdrop});
+			const m = this.table.model.matches.getMatchInfo(wpid, bpid);
+			
+			// console.log({wpid, bpid, row, col, wbye, bbye, wdrop, bdrop, m});
 			
 			if (wdrop || bdrop)
 			{
-				// Do nothing.
+				// One of the players is a dropout. Do nothing.
 			}
 			else if (wbye || bbye)
 			{
 				// TODO: Maybe add a roundHighlightByeClass ?
+			}
+			else if (m !== null && m[2] !== null)
+			{
+				// TODO: Maybe use the roundHighlightClass ?
+				const w = $(this.table.getScoreCell(row, col));
+				const b = $(this.table.getScoreCell(col, row));
+				if (on) w.addClass(this.roundHighlightDeskClass);
+				else w.removeClass(this.roundHighlightDeskClass);
+				if (on) b.addClass(this.roundHighlightDeskClass);
+				else b.removeClass(this.roundHighlightDeskClass);
 			}
 			else
 			{
@@ -227,9 +243,21 @@ export class CrossTableHighlighter
 				const b = $(this.table.getScoreCell(col, row));
 				if (on) b.addClass(this.roundHighlightBlackClass);
 				else b.removeClass(this.roundHighlightBlackClass);
+				
+				if (on)
+				{
+					w.text(desk);
+					b.text(desk);
+					++desk;
+				}
+				else
+				{
+					w.html(m === null ? null : m.ws);
+					b.html(m === null ? null : m.bs);
+				}
 			}
 		});
 		
-		this.lastRoundHighlight = on ? matches.slice(0) : null;
+		this.lastRoundHighlight = on ? pairings.slice(0) : null;
 	}
 }

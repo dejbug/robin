@@ -4,6 +4,17 @@ import { Matches } from "./Matches.js";
 import { SortedMatches } from "./SortedMatches.js";
 import { berger } from "./berger.js";
 
+// FIXME: What do we do with Berger pairings when one or
+//	more dropouts happen? Do we need to reindex the
+//	pids? If so then do it with a LUT because players could
+//	drop out but also back in (not practically but clicktically).
+
+// TODO: Set the Berger pairing black side markers on creation.
+//	Optionally highlight any discrepancies (when the match
+//	actually played had a different color distribution than the
+//	one dictated by the Berger pairings; which should never
+//	happen, really).
+
 // TODO: Put more effort into your choice of a palette. It must
 //	be legible on the projector screen. Best to add a color
 //	picker and some config controls for text size, font fam, etc.
@@ -433,11 +444,12 @@ export class CrossTable
 		this.setRowClass(row, "dropout", index < 0);
 		this.setColClass(col, "dropout", index < 0);
 		
-		// All of these things might be affected by players dropping in/out.
-		this.fillIds();
-		this.fillPoints();
-		this.fillPointsResortIndicator();
-		this.fillDropouts(true);
+		// All of these might be affected by players dropping in/out.
+		// this.fillIds();
+		// this.fillPoints();
+		// this.fillPointsResortIndicator();
+		// this.fillDropouts(true);
+		this.update();
 	}
 
 	toggleScoreState(row, col)
@@ -462,7 +474,7 @@ export class CrossTable
 		this.lastRoundHighlightIndex = index;
 		
 		const playerCount = this.model.matches.pa.length;
-		const rounds = berger(playerCount);
-		this.hi.setRoundHighlight(rounds[index]);
+		const pairings = berger(playerCount);
+		this.hi.setRoundHighlight(pairings[index]);
 	}
 }
