@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="icon" type="image/svg" href="crosshatch.svg">
+	<title>berger</title>
+	<link href="global.css" rel="stylesheet">
+</head>
+<body onload="init()">
+<style>
+#grid {
+	margin: 0 3em;
+	display: grid;
+	grid-gap: 5em;
+	grid-template-columns: auto 1fr auto auto;
+	grid-template-rows: repeat(1, 1fr);
+}
+#berger { grid-row: 1; grid-column: 1; }
+#pairings1 { grid-row: 1; grid-column: 3; }
+#pairings2 { grid-row: 1; grid-column: 4; }
+
+table { border-collapse: collapse; cursor: pointer; user-select: none; }
+td, th { border: thin solid black; padding: .3em; }
+
+#pairings1 td.pid, td.wid { font-weight: bold; }
+#pairings1 td.black { background-color: #ddf; }
+#pairings1 td.white { background-color: #ffe; }
+#pairings1 td.blank { background-color: white; color: transparent; }
+#pairings1 td.blank.dropout { background-color: white; color: grey; }
+#pairings1 td.blank.absent { background-color: white; color: transparent; }
+#pairings1 td.dropout { background-color: grey; color: lightgrey; }
+#pairings1 td.absent { background-color: black; color: grey; }
+
+#pairings2 td.black { background-color: #ddf; }
+#pairings2 td.white { background-color: #ffe; }
+#pairings2 td.identity { background-image: url(crosshatch.svg); }
+#pairings2 td.roundsel.black { background-color: black; color: lightgrey; }
+#pairings2 td.roundsel.white { background-color: grey; color: white; }
+
+</style>
+<pre>
+<div id="grid">
+<div id="pairings1"></div>
+<div id="pairings2"></div>
+<div id="berger">
+
+</div> <!-- #berger -->
+</div> <!-- #grid -->
+<script src="vendor/jquery-3.6.3.min.js"></script>
+<script>
+const playerCount = 8;
+let berger = null;
+let dropouts = {};
+let roundsel = 0;
+
+function init()
+{
+	fetch("berger.json").then(r => { return r.json() }).then(json => { main(json) });
+}
+
+function getPairingsTable(playerCount)
+{
+	if (playerCount < 3 || playerCount > 16) return null;
+	return berger[playerCount + (playerCount % 2)];
+}
+
+function onPidClicked(pid, col, rid)
+{
+	console.log("onPidClicked: %d %s %d", pid, col, rid);
+}
+
+function getPool(startRound=1, dropouts=[])
+{
+}
+
+function blah(id)
+{
+	const pairings = berger[playerCount];
+	const table = $("<table>");
+	for (let rid = 1; rid <= 7; ++rid)
+	{
+		const round = pairings[rid];
+		const tr = $("<tr>");
+		for (let mid = 0; mid < 4; ++mid)
+		{
+			const m = round[mid];
+			$("<td>").text(`${m[0]}-${m[1]}`).appendTo(tr);
+		}
+		tr.appendTo(table);
+	}
+	table.appendTo(id);
+}
+
+function pairings1(id)
+{
+	const rounds = berger[playerCount + (playerCount % 2)];
+	const table = $("<table>");
+	const tr = $("<tr>");
+	$("<th>").text('#').appendTo(tr);
+	tr.appendTo(table);
+	for (rid in rounds)
+		$("<th>").addClass("rid").text(rid).appendTo(tr);
+	for (let pid = 1; pid <= playerCount; ++pid)
+	{
+		const tr = $("<tr>");
+		$("<td>").addClass("pid").text(`${pid}`).appendTo(tr);
+		for (rid in rounds)
+		{
+			const round = rounds[rid];
+			for (mid in round)
+			{
+				const match = round[mid];
+				const [ wid, bid ] = match;
+				const td = $("<td>").addClass("opp");
+				if (pid == wid)
+					td.addClass("white").text(`${bid}`).appendTo(tr);
+				else if (pid == bid)
+					td.addClass("black").text(`${wid}`).appendTo(tr);
+			}
+		}
+		tr.appendTo(table);
+	}
+	table.on("mousedown", e => {
+		e.preventDefault();
+		
+		// console.log(e.target);
+		const opp = e.target.innerText;
+		if (!opp) return;
+		
+		const on = !(opp in dropouts);
+		const rid = e.target.cellIndex;
+		
+		if (on) dropouts[opp] = rid;
+		else delete dropouts[opp];
+		
+		// console.log(dropouts);
+		// const pid = e.target.parentNode.rowIndex;
+		// console.log(pid, rid, opp);
+		for (td of table.find("td.opp"))
+			if (td.parentNode.rowIndex == opp)
+			{
+				if (on)
+				{
+					td.classList.add("blank");
+				}
+				else
+				{
+					td.classList.remove("blank");
+				}
+			}
+			else if (td.innerText == opp)
+			{
+				if (on)
+				{
+					td.classList.add("dropout");
+					if (td.cellIndex >= rid)
+						td.classList.add("absent");
+				}
+				else
+				{
+					td.classList.remove("dropout");
+					td.classList.remove("absent");
+				}
+			}
+	});
+	table.appendTo(id);
+}
+
+function pairings2(id)
+{
+	const rounds = berger[playerCount + (playerCount % 2)];
+	const table = $("<table>");
+	
+	const tr = $("<tr>");
+	$("<th>").text('#').appendTo(tr);
+	for (let pid = 1; pid <= playerCount; ++pid)
+		$("<th>").addClass("bid").text(pid).appendTo(tr);
+	tr.appendTo(table);
+	
+	for (let wid = 1; wid <= playerCount; ++wid)
+	{
+		const tr = $("<tr>");
+		$("<td>").addClass("wid").text(`${wid}`).appendTo(tr);
+		for (let bid = 1; bid <= playerCount; ++bid)
+		{
+			const td = $("<td>").addClass("rid").appendTo(tr);
+			if (wid == bid) td.addClass("identity");
+		}
+		tr.appendTo(table);
+	}
+	
+	for (rid in rounds)
+	{
+		const round = rounds[rid];
+		for (mid in round)
+		{
+			const [ wid, bid ] = round[mid];
+			const w = table.find(`tr:nth-child(${1 + wid}) td.rid:nth-child(${1 + bid})`);
+			w.addClass("white").text(rid);
+			const b = table.find(`tr:nth-child(${1 + bid}) td.rid:nth-child(${1 + wid})`);
+			b.addClass("black").text(rid);
+		}
+	}
+	table.on("mousedown", e => {
+		e.preventDefault();
+		
+		const rid = e.target.innerText;
+		if (!rid) return;
+		
+		const on = rid != roundsel;
+		roundsel = on ? rid : null;
+		
+		for (td of table.find("td.rid"))
+			if (td.innerText == rid)
+			{
+				if (on) td.classList.add("roundsel");
+				else td.classList.remove("roundsel");
+			}
+			else
+				td.classList.remove("roundsel");
+	});
+	table.appendTo(id);
+}
+
+function getPairings(playersInRound=[], playerState={})
+{
+	// console.log(`getPairings(playerCount=${playerCount}, rid=${rid}, dropouts=[${dropouts.join(", ")}])`);
+	// console.log(draw(playersInRound), playersInRound);
+	const cond = (pids, i, pid) => {
+		
+	};
+	const f = draw(playersInRound, cond);
+	const s = draw(playersInRound, cond);
+}
+
+function draw(pids, cond = (pids, i, pid) => { return pids.length > 0 })
+{
+	for (let i in pids)
+	{
+		const pid = pids[i];
+		if (!cond(pids, i, pid)) continue;
+		delete pids[i];
+		return pid;
+	}
+	return null;
+}
+
+function main(json)
+{
+	berger = json;
+	
+	pairings1("#pairings1");
+	pairings2("#pairings2");
+	
+	// const table = getPairingsTable(playerCount);
+	// for (rid in table)
+	// 	console.log(rid, table[rid]);
+
+	let playerState = {};
+	let playersInRound = [1, 2, 3, 4, 5, 6, 7, 8];
+
+	getPairings(playersInRound, playerState);
+}
+</script>
+</pre>
+</body>
+</html>
