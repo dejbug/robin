@@ -350,10 +350,13 @@ export class CrossTable
 		//	from within the crosstable or warp the cursor to stay
 		//	over the cell (this could be too confusing though).
 		
+		const rowpid = this.model.row2pid[row];
+		if (this.model.matches.isDropout(rowpid)) return;
+		const colpid = this.model.row2pid[col];
+		if (this.model.matches.isDropout(colpid)) return;
+		
 		if (e.button == 0)
 		{
-			const rowpid = this.model.row2pid[row];
-			const colpid = this.model.row2pid[col];
 			this.hi.toggleMatchHighlight(rowpid, colpid);
 		}
 		else if (e.button == 1)
@@ -461,7 +464,9 @@ export class CrossTable
 	{
 		// this.hi.clearMatchHighlights(row, col);
 		const rowpid = this.model.row2pid[row];
+		if (this.model.matches.isDropout(rowpid)) return;
 		const colpid = this.model.row2pid[col];
+		if (this.model.matches.isDropout(colpid)) return;
 		this.model.matches.ensureMatchExists(rowpid, colpid);
 		const match = this.model.matches.getMatchInfo(rowpid, colpid);
 		const whiteScoreClicked = rowpid == match[0];
