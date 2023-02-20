@@ -13,12 +13,12 @@
 	margin: 0 3em;
 	display: grid;
 	grid-gap: 5em;
-	grid-template-columns: auto 1fr auto auto;
-	grid-template-rows: repeat(1, 1fr);
+	grid-template-columns: 1fr 1fr 1fr;
+	grid-template-rows: 1fr;
 }
-#berger { grid-row: 1; grid-column: 1; }
-#pairings1 { grid-row: 1; grid-column: 3; }
-#pairings2 { grid-row: 1; grid-column: 4; }
+#crosstable { grid-row: 1; grid-column: 1; }
+#pairings1 { grid-row: 1; grid-column: 2; }
+#pairings2 { grid-row: 1; grid-column: 3; }
 
 table { border-collapse: collapse; cursor: pointer; user-select: none; }
 td, th { border: thin solid black; padding: .3em; }
@@ -41,18 +41,29 @@ td, th { border: thin solid black; padding: .3em; }
 </style>
 <pre>
 <div id="grid">
+<div id="crosstable"></div>
 <div id="pairings1"></div>
 <div id="pairings2"></div>
-<div id="berger">
-
-</div> <!-- #berger -->
 </div> <!-- #grid -->
 <script src="vendor/jquery-3.6.3.min.js"></script>
+<script src="data/Blitzturnier-22-09-Tabelle.csv.js"></script>
+<script type="module">
+// import { Matches } from "./Matches.js";
+// const matches = new Matches(data);
+// console.log(matches);
+</script>
+<script type="module">
+	import { CrossTable } from "./CrossTable.js";
+	let table = new CrossTable("#crosstable");
+	table.installEvents();
+	let model = table.setData(data);
+	// model.matches.clearMatches();
+	table.update();
+</script>
 <script>
 const playerCount = 8;
-let berger = null;
-let dropouts = {};
 let roundsel = 0;
+let dropouts = [];
 
 function init()
 {
@@ -223,17 +234,6 @@ function pairings2(id)
 	table.appendTo(id);
 }
 
-function getPairings(playersInRound=[], playerState={})
-{
-	// console.log(`getPairings(playerCount=${playerCount}, rid=${rid}, dropouts=[${dropouts.join(", ")}])`);
-	// console.log(draw(playersInRound), playersInRound);
-	const cond = (pids, i, pid) => {
-		
-	};
-	const f = draw(playersInRound, cond);
-	const s = draw(playersInRound, cond);
-}
-
 function draw(pids, cond = (pids, i, pid) => { return pids.length > 0 })
 {
 	for (let i in pids)
@@ -246,6 +246,46 @@ function draw(pids, cond = (pids, i, pid) => { return pids.length > 0 })
 	return null;
 }
 
+data.dropouts = [];
+data.resetMatches = function()
+{
+	this.matches = [];
+}
+data.setPlayerEnabled = function(pid, on = true)
+{
+	const from = on ? this.dropouts : this.players;
+	const to = on ? this.players : this.dropouts;
+	
+	for (let i in from)
+	{
+		const p = from[i];
+		if (p[0] == pid)
+		{
+			to.push(p);
+			delete from[i];
+			return true;
+		}
+	}
+	return false;
+}
+
+function getPairings(data)
+{
+	console.log(data.players.length, data.dropouts.length);
+	data.setPlayerEnabled(4, false);
+	console.log(data.players.length, data.dropouts.length);
+	console.log(data);
+	return 4711;
+	// console.log(`getPairings(playerCount=${playerCount}, rid=${rid}, dropouts=[${dropouts.join(", ")}])`);
+	// console.log(draw(playersInRound), playersInRound);
+	const cond = (pids, i, pid) => {
+		return true;
+	};
+	const first = draw(data, cond);
+	const second = draw(data, cond);
+	return { first, second };
+}
+
 function main(json)
 {
 	berger = json;
@@ -256,11 +296,12 @@ function main(json)
 	// const table = getPairingsTable(playerCount);
 	// for (rid in table)
 	// 	console.log(rid, table[rid]);
-
-	let playerState = {};
-	let playersInRound = [1, 2, 3, 4, 5, 6, 7, 8];
-
-	getPairings(playersInRound, playerState);
+	
+	// data.resetMatches();
+	// console.log(data);
+	
+	// const round = getPairings(data);
+	// console.log(round);
 }
 </script>
 </pre>

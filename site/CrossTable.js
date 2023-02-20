@@ -4,6 +4,11 @@ import { Matches } from "./Matches.js";
 import { SortedMatches } from "./SortedMatches.js";
 import { berger } from "./berger.js";
 
+// TODO: Add a pairings class. Make the column header
+//	sensitive to round status.
+
+// FIXME: Change all nulls to undefineds?
+
 // FIXME: What do we do with Berger pairings when one or
 //	more dropouts happen? Do we need to reindex the
 //	pids? If so then do it with a LUT because players could
@@ -433,22 +438,22 @@ export class CrossTable
 		// TODO: Add an option to remove the player completely.
 		//	Maybe { display: none; } could serve to do just that?
 		
+		const on = this.model.matches.toggleDropout(pid);
+		
 		const row = this.model.pid2row[pid];
 		const col = row + 1;
 		
-		const index = this.model.matches.dropouts.indexOf(pid);
+		this.setRowClass(row, "dropout", on);
+		this.setColClass(col, "dropout", on);
 		
-		if (index < 0) this.model.matches.dropouts.push(pid);
-		else delete this.model.matches.dropouts[index];
+		// TODO: All of these might be affected by players dropping in/out.
+		//	Make the fillers more fine-grained?
 		
-		this.setRowClass(row, "dropout", index < 0);
-		this.setColClass(col, "dropout", index < 0);
-		
-		// All of these might be affected by players dropping in/out.
 		// this.fillIds();
 		// this.fillPoints();
 		// this.fillPointsResortIndicator();
 		// this.fillDropouts(true);
+		
 		this.update();
 	}
 
@@ -457,6 +462,7 @@ export class CrossTable
 		// this.hi.clearMatchHighlights(row, col);
 		const rowpid = this.model.row2pid[row];
 		const colpid = this.model.row2pid[col];
+		this.model.matches.ensureMatchExists(rowpid, colpid);
 		const match = this.model.matches.getMatchInfo(rowpid, colpid);
 		const whiteScoreClicked = rowpid == match[0];
 		match.toggleResult(whiteScoreClicked);
