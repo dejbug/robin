@@ -3,28 +3,31 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="icon" type="image/svg" href="crosshatch.svg">
+	<link rel="icon" type="image/svg" href="../crosshatch.svg">
 	<title>berger</title>
-	<link href="global.css" rel="stylesheet">
+	<link href="../global.css" rel="stylesheet">
 <style>
+#berger-comparison { position: relative; margin: 3em; }
+#berger-comparison .berger-prefab { display: inline-block; position: relative; top: 0px; left: 0px; color: blue; }
+#berger-comparison .berger-generated { display: inline-block; position: absolute; top: 1px; left: 1px; color: red; }
+
 #grid1 {
 	margin: 0 3em;
 	display: grid;
-	grid-gap: 5em;
-	grid-template-columns: 1fr 1fr;
+	gap: 1em;
+	grid-template-columns: auto 1fr;
 	grid-template-rows: 1fr;
 }
-#grid1 .berger-prefab { grid-row: 1; grid-column: 1; }
-#grid1 .berger-generated { grid-row: 1; grid-column: 2; }
+#grid1 #berger-generated-1 { grid-row: 1; grid-column: 1; }
+#grid1 #berger-generated-2 { grid-row: 1; grid-column: 2; }
 
 #grid2 {
 	margin: 3em;
 	display: grid;
-	grid-gap: 5em;
-	grid-template-columns: 2fr 1fr;
-	grid-template-rows: 1fr 1fr;
+	gap: 1em;
+	grid-template-columns: 1fr 1fr;
+	grid-template-rows: 1fr;
 }
-#grid2 > div { padding: 1em; }
 #crosstable { grid-row: 1; grid-column: 1; }
 #pairings1 { grid-row: 1; grid-column: 2; }
 #pairings2 { grid-row: 2; grid-column: 2; }
@@ -32,61 +35,64 @@
 table { border-collapse: collapse; cursor: pointer; user-select: none; }
 td, th { border: thin solid black; padding: .3em; }
 
-#pairings1 td.pid, td.wid { font-weight: bold; }
-#pairings1 td.black { background-color: #ddf; }
-#pairings1 td.white { background-color: #ffe; }
-#pairings1 td.blank { background-color: white; color: transparent; }
-#pairings1 td.blank.dropout { background-color: white; color: grey; }
-#pairings1 td.blank.absent { background-color: white; color: transparent; }
-#pairings1 td.dropout { background-color: grey; color: lightgrey; }
-#pairings1 td.absent { background-color: black; color: grey; }
+.rounds-table td.pid, td.wid { font-weight: bold; }
+.rounds-table td.black { background-color: #ddf; }
+.rounds-table td.white { background-color: #ffe; }
+.rounds-table td.blank { background-color: white; color: transparent; }
+.rounds-table td.blank.dropout { background-color: white; color: blue; }
+.rounds-table td.blank.absent { background-color: white; color: transparent; }
+.rounds-table td.dropout { background-color: white; color: red; }
+.rounds-table td.absent { background-color: black; color: grey; }
 
 #pairings2 td.black { background-color: #ddf; }
 #pairings2 td.white { background-color: #ffe; }
-#pairings2 td.identity { background-image: url(crosshatch.svg); }
+#pairings2 td.identity { background-image: url(../crosshatch.svg); }
 #pairings2 td.roundsel.black { background-color: black; color: lightgrey; }
 #pairings2 td.roundsel.white { background-color: grey; color: white; }
 
-#berger-comparison { position: relative; margin: 3em; }
-#berger-comparison .berger-prefab { display: inline-block; position: relative; top: 0px; left: 0px; color: blue; }
-#berger-comparison .berger-generated { display: inline-block; position: absolute; top: 1px; left: 1px; color: red; }
+.row { display: flex; flex-flow: row nowrap; gap: 1em; }
+.column { display: flex; flex-flow: column nowrap; gap: 1em; }
 
+.duplicate { color: crimson; }
 </style>
 </head>
-<body onload="init()">
-
+<body>
 <div id="berger-comparison">
-<div class="berger-prefab"></div>
-<div class="berger-generated"></div>
+	<div class="berger-prefab"></div>
+	<div class="berger-generated"></div>
 </div>
 
 <div id="grid1">
-<div class="berger-generated"></div>
-<div class="berger-prefab"></div>
+	<div class="row">
+		<div id="berger-generated-1"></div>
+		<div id="berger-generated-1-relabeler"></div>
+	</div>
+	<div id="berger-generated-2"></div>
 </div>
+
 <div id="grid2">
-<div id="crosstable"></div>
-<div style="display: flex; flex-flow: column nowrap; gap: 1em;">
-<div id="pairings1"></div>
-<div id="pairings2"></div>
+	<div id="crosstable"></div>
+	<div class="column">
+		<div id="pairings1"></div>
+		<div id="pairings2"></div>
+	</div>
 </div>
-</div>
-<script src="vendor/jquery-3.6.3.min.js"></script>
-<script src="data/Blitzturnier-22-09-Tabelle.csv.js"></script>
+<script src="../vendor/jquery-3.6.3.min.js"></script>
+<script src="../data/Blitzturnier-22-09-Tabelle.csv.js"></script>
 <script type="module">
 // import { Matches } from "./Matches.js";
 // const matches = new Matches(data);
 // console.log(matches);
 </script>
 <script type="module">
-	import { CrossTable } from "./CrossTable.js";
+	import { CrossTable } from "../CrossTable.js";
 	let table = new CrossTable("#crosstable");
 	table.installEvents();
 	let model = table.setData(data);
 	model.matches.clearMatches();
 	table.update();
 </script>
-<script>
+<script type="module">
 const playerCount = 8;
 let roundsel = 0;
 let dropouts = [];
@@ -129,23 +135,24 @@ function blah(id)
 	table.appendTo(id);
 }
 
-function pairings1(id)
+function pairings1(id, berger)
 {
 	const rounds = berger[playerCount + (playerCount % 2)];
 	const table = $("<table>");
+	table.addClass("rounds-table");
 	const tr = $("<tr>");
 	$("<th>").text('#').appendTo(tr);
 	tr.appendTo(table);
-	for (rid in rounds)
+	for (let rid in rounds)
 		$("<th>").addClass("rid").text(rid).appendTo(tr);
 	for (let pid = 1; pid <= playerCount; ++pid)
 	{
 		const tr = $("<tr>");
 		$("<td>").addClass("pid").text(`${pid}`).appendTo(tr);
-		for (rid in rounds)
+		for (let rid in rounds)
 		{
 			const round = rounds[rid];
-			for (mid in round)
+			for (let mid in round)
 			{
 				const match = round[mid];
 				const [ wid, bid ] = match;
@@ -204,7 +211,7 @@ function pairings1(id)
 	table.appendTo(id);
 }
 
-function pairings2(id)
+function pairings2(id, berger)
 {
 	const rounds = berger[playerCount + (playerCount % 2)];
 	const table = $("<table>");
@@ -227,10 +234,10 @@ function pairings2(id)
 		tr.appendTo(table);
 	}
 	
-	for (rid in rounds)
+	for (let rid in rounds)
 	{
 		const round = rounds[rid];
-		for (mid in round)
+		for (let mid in round)
 		{
 			const [ wid, bid ] = round[mid];
 			const w = table.find(`tr:nth-child(${1 + wid}) td.rid:nth-child(${1 + bid})`);
@@ -312,7 +319,7 @@ function getPairings(data)
 	return { first, second };
 }
 
-function getBergerTable(playersCount)
+function getBergerTable(berger, playersCount)
 {
 	if (playersCount < 3 || playersCount > 16) return null;
 	return berger[playersCount + (playersCount % 2)];
@@ -325,7 +332,7 @@ function roundsTableFromBergerTable(t)
 	{
 		for (let m in t[r])
 		{
-			[w, b] = t[r][m];
+			let [w, b] = t[r][m];
 			if (!(w in d)) d[w] = [];
 			if (!(b in d)) d[b] = [];
 			d[w][r] = b;
@@ -353,6 +360,7 @@ function showRoundsTable(id, t)
 	}
 	
 	e.appendTo(id);
+	return e;
 }
 
 function generateRoundsTable(playersCount)
@@ -383,12 +391,142 @@ function generateRoundsTable(playersCount)
 	return table;
 }
 
-function main(json)
+class RoundsTable
 {
-	berger = json;
+	constructor(id)
+	{
+		this.table = document.querySelector(id);
+		this.table.classList.add("rounds-table");
+		this.dropouts = [];
+	}
 	
-	pairings1("#pairings1");
-	pairings2("#pairings2");
+	installEvents()
+	{
+		this.table.onmousedown = e => {
+			e.preventDefault();
+			
+			const opp = e.target.innerText;
+			if (!opp) return;
+			
+			const on = !(opp in this.dropouts);
+			const rid = e.target.cellIndex;
+			
+			if (on) this.dropouts[opp] = rid;
+			else delete this.dropouts[opp];
+			
+			for (let td of this.table.querySelectorAll("td"))
+			{
+				if (td.parentNode.rowIndex == opp)
+				{
+					if (on) td.classList.add("blank");
+					else td.classList.remove("blank");
+				}
+				else if (td.innerText == opp)
+				{
+					if (on)
+					{
+						td.classList.add("dropout");
+						if (td.cellIndex >= rid)
+							td.classList.add("absent");
+					}
+					else
+					{
+						td.classList.remove("dropout");
+						td.classList.remove("absent");
+					}
+				}
+			}
+		};
+		return this;
+	}
+	
+	relabel(map)
+	{
+		const tds = this.table.querySelectorAll("td");
+		for (let td of tds)
+		{
+			if (td["relabel-original"] === undefined)
+				td["relabel-original"] = parseInt(td.innerText);
+			td.innerText = map[td["relabel-original"]];
+		}
+	}
+}
+
+class RelabelerTable
+{
+	constructor(id, parent, callback)
+	{
+		this.id = id;
+		this.parent = document.querySelector(parent).querySelector("table");
+		this.callback = callback;
+		this.table = null;
+		
+		this.count = this.parent.querySelectorAll("tr").length - 1;
+		this.map = [];
+		for (let i = 1; i <= this.count; ++i)
+			this.map[i] = i;
+	}
+	
+	create()
+	{
+		if (this.table) throw new Error(`RelabelerTable.create(): '${this.id}' already created`);
+		const table = $("<table>");
+		this.table = table[0];
+		
+		const tr = $("<tr>").appendTo(table);
+		$("<th>").text("=").attr("colspan", "2").appendTo(tr);
+		
+		for (let i in this.map)
+		{
+			const tr = $("<tr>").appendTo(table);
+			$("<td>").text(i).appendTo(tr);
+			$("<td>").text(this.map[i]).appendTo(tr);
+		}
+		
+		table.appendTo(this.id);
+		return this;
+	}
+	
+	update()
+	{
+		const tds = this.table.querySelectorAll("td:nth-child(2)");
+		for (let td of tds)
+			td.innerText = this.map[td.parentNode.rowIndex];
+	}
+	
+	installEvents(e)
+	{
+		this.table.onmousedown = e => {
+			e.preventDefault();
+			
+			const r = e.target.parentNode.rowIndex;
+			const c = e.target.cellIndex;
+			if (r < 1 || c < 1) return;
+			if (isNaN(e.target.innerText)) return;
+			const n = parseInt(e.target.innerText) % this.count + 1;
+			// const i = this.map.find(i => this.map[i] == n);
+			// if (i === undefined) return;
+			// [ this.map[r], this.map[i] ] = [ this.map[i], this.map[r] ];
+			this.map[r] = n;
+			this.update();
+			if (this.callback) this.callback(this.map);
+			
+			const tds = this.table.querySelectorAll("td:nth-child(2)");
+			tds.forEach(td => td.classList.remove("duplicate"));
+			tds.forEach(td => {
+				const dups = Object.keys(tds).filter(k => tds[k].innerText == td.innerText);
+				if (dups.length > 1)
+					td.classList.add("duplicate");
+			});
+		};
+		return this;
+	}
+}
+
+function main(berger)
+{
+	pairings1("#pairings1", berger);
+	pairings2("#pairings2", berger);
 	
 	// const table = getPairingsTable(playerCount);
 	// for (rid in table)
@@ -405,9 +543,21 @@ function main(json)
 	const t = generateRoundsTable(playersCount);
 	// console.log(t);
 	showRoundsTable(".berger-generated", t);
-	showRoundsTable(".berger-prefab", roundsTableFromBergerTable(getBergerTable(playersCount)));
+	showRoundsTable(".berger-prefab", roundsTableFromBergerTable(getBergerTable(berger, playersCount)));
 
+	showRoundsTable("#berger-generated-1", generateRoundsTable(8))
+	showRoundsTable("#berger-generated-2", generateRoundsTable(6))
+	
+	const rt1 = new RoundsTable("#berger-generated-1").installEvents();
+	new RoundsTable("#berger-generated-2").installEvents();
+	
+	const bg1re = new RelabelerTable("#berger-generated-1-relabeler", "#berger-generated-1", map => {
+		rt1.relabel(map);
+	});
+	bg1re.create().installEvents();
 }
+
+$(init);
 </script>
 </body>
 </html>

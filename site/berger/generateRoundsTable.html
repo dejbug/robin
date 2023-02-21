@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="icon" type="image/svg" href="../crosshatch.svg">
+	<title>berger</title>
+	<link href="../global.css" rel="stylesheet">
+<style>
+#info { position: fixed; top: 0; right: 1em; }
+#berger-comparison { position: relative; margin: 3em; }
+#berger-comparison #berger-prefab { display: inline-block; position: relative; top: 0px; left: 0px; color: blue; }
+#berger-comparison #berger-generated { display: inline-block; position: absolute; top: 1px; left: 1px; color: red; }
+</style>
+</head>
+<body>
+<div id="info">
+<p>(use the mouse wheel)</p>
+<p id="extra"></p>
+</div>
+<div id="berger-comparison">
+	<div id="berger-prefab"></div>
+	<div id="berger-generated"></div>
+</div>
+<script src="../vendor/jquery-3.6.3.min.js"></script>
+<script type="module">
+import { generateRoundsTable, roundsTableFromBergerTable } from "../berger.js";
+
+function getBergerTable(berger, playersCount)
+{
+	if (playersCount < 3 || playersCount > 16) return null;
+	return berger[playersCount + (playersCount % 2)];
+}
+
+function showRoundsTable(id, t)
+{
+	$(id).html("");
+	
+	const e = $("<table>");
+	
+	const tr = $("<tr>").appendTo(e);
+	$("<th>").text("#").appendTo(tr);
+	for (let c in t[1])
+		$("<th>").text(c).appendTo(tr);
+	
+	for (let r in t)
+	{
+		const tr = $("<tr>").appendTo(e);
+		$("<td>").text(r).appendTo(tr);
+		for (let c in t[r])
+			$("<td>").text(t[r][c]).appendTo(tr);
+	}
+	
+	e.appendTo(id);
+	return e;
+}
+
+function init()
+{
+	fetch("berger.json").then(r => { return r.json() }).then(json => { main(json) });
+}
+
+function show(berger, playersCount)
+{
+	const table = getBergerTable(berger, playersCount);
+	const prefab = roundsTableFromBergerTable(table);
+	const generated = generateRoundsTable(playersCount);
+	
+	showRoundsTable("#berger-prefab", prefab);
+	showRoundsTable("#berger-generated", generated);
+	
+	$("#info #extra").text(table ? "" : `No prefab found for ${playersCount} in FIDE manual.`);
+}
+
+function main(berger)
+{
+	let playersCount = 2;
+	show(berger, playersCount);
+	
+	document.addEventListener("wheel", e => {
+		playersCount += 2 * Math.sign(e.deltaY);
+		if (playersCount < 2) playersCount = 2;
+		show(berger, playersCount);
+	});
+}
+
+$(init);
+</script>
+</body>
+</html>

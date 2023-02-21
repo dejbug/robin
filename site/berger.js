@@ -1,7 +1,53 @@
-export function berger(count)
+export function generateRoundsTable(playersCount)
 {
-	if (count < 3 || count > 16) return null;
-	return lut[count + (count % 2)];
+	if (playersCount < 2) return null;
+	playersCount = playersCount + (playersCount % 2);
+	const roundsCount = playersCount - 1;
+
+	let table = [];
+	for (let r = 0; r < playersCount - 1; ++r)
+	{
+		let row = [];
+		let pid = roundsCount - r;
+		for (let c = 0; c < roundsCount; ++c)
+		{
+			const x = (pid++) % roundsCount;
+			row[c + 1] = x == r ? playersCount : x + 1;
+		}
+		table[r + 1] = row;
+	}
+	
+	let row = [];
+	let i = 1;
+	let j = playersCount / 2 + 1;
+	for (let c = 0; c < roundsCount; ++c)
+		row[c + 1] = c % 2 == 0 ? i++ : j++;
+	table[playersCount] = row;
+	
+	return table;
+}
+
+export function roundsTableFromBergerTable(t)
+{
+	let d = [];
+	for (let r in t)
+	{
+		for (let m in t[r])
+		{
+			let [w, b] = t[r][m];
+			if (!(w in d)) d[w] = [];
+			if (!(b in d)) d[b] = [];
+			d[w][r] = b;
+			d[b][r] = w;
+		}
+	}
+	return d;
+}
+
+export function berger(playersCount)
+{
+	if (playersCount < 3 || playersCount > 16) return null;
+	return lut[playersCount + (playersCount % 2)];
 }
 
 let lut = {

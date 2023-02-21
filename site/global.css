@@ -1,5 +1,5 @@
-table { font-family: sans; }
-table, th, td { border: 1px solid grey; }
+table { border-collapse: collapse; cursor: pointer; user-select: none; font-family: sans; }
+table, th, td { border: 1px solid grey; padding: .3em; }
 table { border-collapse: collapse; font-size: 10pt; }
 th, td { padding: 5px; min-width: 2em; text-align: center; }
 table > tr > td:nth-child(1) { font-weight: bold; }
