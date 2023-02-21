@@ -6,19 +6,28 @@
 	<link rel="icon" type="image/svg" href="crosshatch.svg">
 	<title>berger</title>
 	<link href="global.css" rel="stylesheet">
-</head>
-<body onload="init()">
 <style>
-#grid {
+#grid1 {
 	margin: 0 3em;
 	display: grid;
 	grid-gap: 5em;
-	grid-template-columns: 1fr 1fr 1fr;
+	grid-template-columns: 1fr 1fr;
 	grid-template-rows: 1fr;
 }
+#grid1 .berger-prefab { grid-row: 1; grid-column: 1; }
+#grid1 .berger-generated { grid-row: 1; grid-column: 2; }
+
+#grid2 {
+	margin: 3em;
+	display: grid;
+	grid-gap: 5em;
+	grid-template-columns: 2fr 1fr;
+	grid-template-rows: 1fr 1fr;
+}
+#grid2 > div { padding: 1em; }
 #crosstable { grid-row: 1; grid-column: 1; }
 #pairings1 { grid-row: 1; grid-column: 2; }
-#pairings2 { grid-row: 1; grid-column: 3; }
+#pairings2 { grid-row: 2; grid-column: 2; }
 
 table { border-collapse: collapse; cursor: pointer; user-select: none; }
 td, th { border: thin solid black; padding: .3em; }
@@ -38,13 +47,30 @@ td, th { border: thin solid black; padding: .3em; }
 #pairings2 td.roundsel.black { background-color: black; color: lightgrey; }
 #pairings2 td.roundsel.white { background-color: grey; color: white; }
 
+#berger-comparison { position: relative; margin: 3em; }
+#berger-comparison .berger-prefab { display: inline-block; position: relative; top: 0px; left: 0px; color: blue; }
+#berger-comparison .berger-generated { display: inline-block; position: absolute; top: 1px; left: 1px; color: red; }
+
 </style>
-<pre>
-<div id="grid">
+</head>
+<body onload="init()">
+
+<div id="berger-comparison">
+<div class="berger-prefab"></div>
+<div class="berger-generated"></div>
+</div>
+
+<div id="grid1">
+<div class="berger-generated"></div>
+<div class="berger-prefab"></div>
+</div>
+<div id="grid2">
 <div id="crosstable"></div>
+<div style="display: flex; flex-flow: column nowrap; gap: 1em;">
 <div id="pairings1"></div>
 <div id="pairings2"></div>
-</div> <!-- #grid -->
+</div>
+</div>
 <script src="vendor/jquery-3.6.3.min.js"></script>
 <script src="data/Blitzturnier-22-09-Tabelle.csv.js"></script>
 <script type="module">
@@ -286,6 +312,77 @@ function getPairings(data)
 	return { first, second };
 }
 
+function getBergerTable(playersCount)
+{
+	if (playersCount < 3 || playersCount > 16) return null;
+	return berger[playersCount + (playersCount % 2)];
+}
+
+function roundsTableFromBergerTable(t)
+{
+	let d = [];
+	for (let r in t)
+	{
+		for (let m in t[r])
+		{
+			[w, b] = t[r][m];
+			if (!(w in d)) d[w] = [];
+			if (!(b in d)) d[b] = [];
+			d[w][r] = b;
+			d[b][r] = w;
+		}
+	}
+	return d;
+}
+
+function showRoundsTable(id, t)
+{
+	const e = $("<table>");
+	
+	const tr = $("<tr>").appendTo(e);
+	$("<th>").text("#").appendTo(tr);
+	for (let c in t[1])
+		$("<th>").text(c).appendTo(tr);
+	
+	for (let r in t)
+	{
+		const tr = $("<tr>").appendTo(e);
+		$("<td>").text(r).appendTo(tr);
+		for (let c in t[r])
+			$("<td>").text(t[r][c]).appendTo(tr);
+	}
+	
+	e.appendTo(id);
+}
+
+function generateRoundsTable(playersCount)
+{
+	if (playersCount < 2) return null;
+	playersCount = playersCount + (playersCount % 2);
+	const roundsCount = playersCount - 1;
+	// console.log({playersCount, roundsCount});
+	let table = [];
+	for (let r = 0; r < playersCount - 1; ++r)
+	{
+		let row = [];
+		let pid = roundsCount - r;
+		for (let c = 0; c < roundsCount; ++c)
+		{
+			// row[c + 1] = pid == r ? playersCount : (pid++ % playersCount) + 1;
+			const x = (pid++) % roundsCount;
+			row[c + 1] = x == r ? playersCount : x + 1;
+		}
+		table[r + 1] = row;
+	}
+	let row = [];
+	let i = 1;
+	let j = playersCount / 2 + 1;
+	for (let c = 0; c < roundsCount; ++c)
+		row[c + 1] = c % 2 == 0 ? i++ : j++;
+	table[playersCount] = row;
+	return table;
+}
+
 function main(json)
 {
 	berger = json;
@@ -302,8 +399,15 @@ function main(json)
 	
 	// const round = getPairings(data);
 	// console.log(round);
+	
+	const playersCount = 12;
+	// for (let i = 0; i < 17; ++i) generateRoundsTable(i);
+	const t = generateRoundsTable(playersCount);
+	// console.log(t);
+	showRoundsTable(".berger-generated", t);
+	showRoundsTable(".berger-prefab", roundsTableFromBergerTable(getBergerTable(playersCount)));
+
 }
 </script>
-</pre>
 </body>
 </html>
