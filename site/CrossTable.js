@@ -369,7 +369,10 @@ export class CrossTable
 	onIdHeaderClicked(e)
 	{
 		if (!this.model) return;
-		this.model.sortById(null, this.opt.pushDownDropouts);
+		if (e.button == 0)
+			this.model.sortById(null, this.opt.pushDownDropouts);
+		else if (e.button == 1)
+			this.opt.showPidsInsteadOfIndex = !this.opt.showPidsInsteadOfIndex;
 		this.update();
 	}
 
