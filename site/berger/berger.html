@@ -35,6 +35,12 @@
 table { border-collapse: collapse; cursor: pointer; user-select: none; }
 td, th { border: thin solid black; padding: .3em; }
 
+.berger-table .ordered { color: black; }
+.berger-table .unordered { color: blue; }
+
+.berger-colors-table .white { background-color: #ffe; }
+.berger-colors-table .black { background-color: #ddf; }
+
 .rounds-table td.pid, td.wid { font-weight: bold; }
 .rounds-table td.black { background-color: #ddf; }
 .rounds-table td.white { background-color: #ffe; }
@@ -52,14 +58,22 @@ td, th { border: thin solid black; padding: .3em; }
 
 .row { display: flex; flex-flow: row nowrap; gap: 1em; }
 .column { display: flex; flex-flow: column nowrap; gap: 1em; }
+.padded { padding: 1em; ]
 
 .duplicate { color: crimson; }
 </style>
 </head>
 <body>
-<div id="berger-comparison">
-	<div class="berger-prefab"></div>
-	<div class="berger-generated"></div>
+<div class="padded row">
+	<div id="berger-o-s"></div>
+	<div id="berger-g"></div>
+	<div id="berger-g-c"></div>
+	<div id="berger-o"></div>
+</div>
+
+<div class="padded row">
+	<div id="berger-o-ct"></div>
+	<div id="berger-g-ct"></div>
 </div>
 
 <div id="grid1">
@@ -93,6 +107,13 @@ td, th { border: thin solid black; padding: .3em; }
 	table.update();
 </script>
 <script type="module">
+import {
+	generateRoundsTable, bergerTableFromRoundsTable,
+	sortBergerTable, distributeColors,
+	renderRoundsTable, renderBergerTable,
+	renderBergerColorsTable1, renderBergerColorsTable2
+} from "../berger.js";
+
 const playerCount = 8;
 let roundsel = 0;
 let dropouts = [];
@@ -181,7 +202,7 @@ function pairings1(id, berger)
 		// console.log(dropouts);
 		// const pid = e.target.parentNode.rowIndex;
 		// console.log(pid, rid, opp);
-		for (td of table.find("td.opp"))
+		for (let td of table.find("td.opp"))
 			if (td.parentNode.rowIndex == opp)
 			{
 				if (on)
@@ -255,7 +276,7 @@ function pairings2(id, berger)
 		const on = rid != roundsel;
 		roundsel = on ? rid : null;
 		
-		for (td of table.find("td.rid"))
+		for (let td of table.find("td.rid"))
 			if (td.innerText == rid)
 			{
 				if (on) td.classList.add("roundsel");
@@ -340,55 +361,6 @@ function roundsTableFromBergerTable(t)
 		}
 	}
 	return d;
-}
-
-function showRoundsTable(id, t)
-{
-	const e = $("<table>");
-	
-	const tr = $("<tr>").appendTo(e);
-	$("<th>").text("#").appendTo(tr);
-	for (let c in t[1])
-		$("<th>").text(c).appendTo(tr);
-	
-	for (let r in t)
-	{
-		const tr = $("<tr>").appendTo(e);
-		$("<td>").text(r).appendTo(tr);
-		for (let c in t[r])
-			$("<td>").text(t[r][c]).appendTo(tr);
-	}
-	
-	e.appendTo(id);
-	return e;
-}
-
-function generateRoundsTable(playersCount)
-{
-	if (playersCount < 2) return null;
-	playersCount = playersCount + (playersCount % 2);
-	const roundsCount = playersCount - 1;
-	// console.log({playersCount, roundsCount});
-	let table = [];
-	for (let r = 0; r < playersCount - 1; ++r)
-	{
-		let row = [];
-		let pid = roundsCount - r;
-		for (let c = 0; c < roundsCount; ++c)
-		{
-			// row[c + 1] = pid == r ? playersCount : (pid++ % playersCount) + 1;
-			const x = (pid++) % roundsCount;
-			row[c + 1] = x == r ? playersCount : x + 1;
-		}
-		table[r + 1] = row;
-	}
-	let row = [];
-	let i = 1;
-	let j = playersCount / 2 + 1;
-	for (let c = 0; c < roundsCount; ++c)
-		row[c + 1] = c % 2 == 0 ? i++ : j++;
-	table[playersCount] = row;
-	return table;
 }
 
 class RoundsTable
@@ -528,25 +500,11 @@ function main(berger)
 	pairings1("#pairings1", berger);
 	pairings2("#pairings2", berger);
 	
-	// const table = getPairingsTable(playerCount);
-	// for (rid in table)
-	// 	console.log(rid, table[rid]);
-	
-	// data.resetMatches();
-	// console.log(data);
-	
-	// const round = getPairings(data);
-	// console.log(round);
-	
 	const playersCount = 12;
-	// for (let i = 0; i < 17; ++i) generateRoundsTable(i);
 	const t = generateRoundsTable(playersCount);
-	// console.log(t);
-	showRoundsTable(".berger-generated", t);
-	showRoundsTable(".berger-prefab", roundsTableFromBergerTable(getBergerTable(berger, playersCount)));
 
-	showRoundsTable("#berger-generated-1", generateRoundsTable(8))
-	showRoundsTable("#berger-generated-2", generateRoundsTable(6))
+	renderRoundsTable(generateRoundsTable(8)).appendTo("#berger-generated-1");
+	renderRoundsTable(generateRoundsTable(6)).appendTo("#berger-generated-2");
 	
 	const rt1 = new RoundsTable("#berger-generated-1").installEvents();
 	new RoundsTable("#berger-generated-2").installEvents();
@@ -555,6 +513,19 @@ function main(berger)
 		rt1.relabel(map);
 	});
 	bg1re.create().installEvents();
+	
+	const berger_o = getBergerTable(berger, 12);
+	const berger_o_s = sortBergerTable(getBergerTable(berger, 12));
+	const berger_g = bergerTableFromRoundsTable(generateRoundsTable(12));
+	const berger_g_c = distributeColors(bergerTableFromRoundsTable(generateRoundsTable(12)));
+	
+	renderBergerTable(berger_o_s, "Original (sorted)").appendTo("#berger-o-s");
+	renderBergerTable(berger_g, "Generated").appendTo("#berger-g");
+	renderBergerTable(berger_g_c, "Generated (colorized)").appendTo("#berger-g-c");
+	renderBergerTable(berger_o, "Original").appendTo("#berger-o");
+	
+	renderBergerColorsTable1(berger_o, "Original Berger Table").appendTo("#berger-o-ct");
+	renderBergerColorsTable1(berger_g_c, "Generated Berger Table").appendTo("#berger-g-ct");
 }
 
 $(init);

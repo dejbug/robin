@@ -3,7 +3,7 @@ export function generateRoundsTable(playersCount)
 	if (playersCount < 2) return null;
 	playersCount = playersCount + (playersCount % 2);
 	const roundsCount = playersCount - 1;
-
+	
 	let table = [];
 	for (let r = 0; r < playersCount - 1; ++r)
 	{
@@ -11,7 +11,7 @@ export function generateRoundsTable(playersCount)
 		let pid = roundsCount - r;
 		for (let c = 0; c < roundsCount; ++c)
 		{
-			const x = (pid++) % roundsCount;
+			const x = pid++ % roundsCount;
 			row[c + 1] = x == r ? playersCount : x + 1;
 		}
 		table[r + 1] = row;
@@ -27,11 +27,22 @@ export function generateRoundsTable(playersCount)
 	return table;
 }
 
+export function colorsTableFromBergerTable(t)
+{
+	let c = [];
+	for (let r in t)
+	{
+		c[r] = [];
+		for (let m of t[r])
+			c[r].push(m[0]);
+	}
+	return c;
+}
+
 export function roundsTableFromBergerTable(t)
 {
 	let d = [];
 	for (let r in t)
-	{
 		for (let m in t[r])
 		{
 			let [w, b] = t[r][m];
@@ -40,8 +51,182 @@ export function roundsTableFromBergerTable(t)
 			d[w][r] = b;
 			d[b][r] = w;
 		}
-	}
 	return d;
+}
+
+export function bergerTableFromRoundsTable(table)
+{
+	let berger = [];
+	
+	for (let rid in table[1])
+		berger[rid] = [];
+	
+	for (let rid in table[1])
+		for (let pid in table)
+		{
+			pid = parseInt(pid);
+			const opp = table[pid][rid];
+			if (pid < opp)
+				berger[rid].push([pid, opp])
+		}
+	
+	return berger;
+}
+
+export function sortBergerTable(table, matches = true, rounds = true)
+{
+	// TODO: Find out how to deepcopy objects.
+	
+	let out = [];
+	for (let rid in table)
+	{
+		out[rid] = [];
+		for (let mid in table[rid])
+		{
+			out[rid][mid] = [...table[rid][mid]];
+			if (matches) out[rid][mid].sort((a, b) => a - b);
+		}
+		if (rounds) out[rid].sort((a, b) => a[0] - b[0]);
+	}
+	return out;
+}
+
+export function distributeColors(berger)
+{
+	let pp = [];
+	const addWhite = p => pp[p] += 1;
+	const countWhites = p => p in pp ? pp[p] : pp[p] = 0;
+	const needSwap = m => countWhites(m[0]) > countWhites(m[1]);
+	const swapColors = m => [ m[0], m[1] ] = [ m[1], m[0] ];
+	
+	for (let rid in berger)
+		for (let m of berger[rid])
+		{
+			if (needSwap(m))
+				swapColors(m);
+			addWhite(m[0]);
+		}
+	
+	return berger;
+}
+
+export function renderRoundsTable(table, caption = null)
+{
+	const e = $("<table>").addClass("rounds-table");
+	if (caption) $("<caption>").text(caption).appendTo(e);
+	
+	const tr = $("<tr>").appendTo(e);
+	$("<th>").text("#").appendTo(tr);
+	for (let c in table[1])
+		$("<th>").text(c).appendTo(tr);
+	
+	for (let r in table)
+	{
+		const tr = $("<tr>").appendTo(e);
+		$("<td>").text(r).appendTo(tr);
+		for (let c in table[r])
+			$("<td>").text(table[r][c]).appendTo(tr);
+	}
+	
+	return e;
+}
+
+export function renderBergerTable(table, caption = null)
+{
+	if (table == null) return table;
+	
+	const e = $("<table>").addClass("berger-table");
+	if (caption) $("<caption>").text(caption).appendTo(e);
+	
+	const tr = $("<tr>").appendTo(e);
+	$("<th>").text("#").appendTo(tr);
+	for (let mid in table[1])
+		$("<th>").text(parseInt(mid) + 1).appendTo(tr);
+	
+	for (let rid in table)
+	{
+		const tr = $("<tr>").appendTo(e);
+		$("<td>").text(rid).appendTo(tr);
+		for (let m of table[rid])
+			$("<td>")
+				.addClass(m[0] < m[1] ? "ordered" : "unordered")
+				.text(`${m[0]}-${m[1]}`)
+				.appendTo(tr);
+		tr.appendTo(e);
+	}
+	
+	return e;
+}
+
+export function renderBergerColorsTable1(bt, caption = null)
+{
+	const rt = roundsTableFromBergerTable(bt);
+	const ct = colorsTableFromBergerTable(bt);
+	
+	const e = $("<table>").addClass("berger-colors-table");
+	if (caption) $("<caption>").text(caption).appendTo(e);
+	
+	const tr = $("<tr>");
+	$("<th>").text('#').appendTo(tr);
+	for (let pid in rt)
+	{
+		for (let rid in rt[pid])
+			$("<th>").addClass("rid").text(rid).appendTo(tr);
+		tr.appendTo(e);
+		break;
+	}
+	
+	for (let pid in rt)
+	{
+		const tr = $("<tr>");
+		$("<td>").addClass("pid").text(pid).appendTo(tr);
+		for (let rid in rt[pid])
+			$("<td>").text(rt[pid][rid])
+			.addClass("opp")
+			.addClass(ct[rid].includes(parseInt(pid)) ? "white" : "black")
+			.appendTo(tr);
+		tr.appendTo(e);
+	}
+	
+	return e;
+}
+
+export function renderBergerColorsTable2(table, caption = null)
+{
+	const playerCount = Object.keys(table).length + 1;
+	
+	const e = $("<table>").addClass("berger-colors-table");
+	if (caption) $("<caption>").text(caption).appendTo(e);
+	
+	const tr = $("<tr>");
+	$("<th>").text('#').appendTo(tr);
+	for (let pid = 1; pid <= playerCount; ++pid)
+		$("<th>").addClass("bid").text(pid).appendTo(tr);
+	tr.appendTo(e);
+	
+	for (let wid = 1; wid <= playerCount; ++wid)
+	{
+		const tr = $("<tr>");
+		$("<td>").addClass("wid").text(`${wid}`).appendTo(tr);
+		for (let bid = 1; bid <= playerCount; ++bid)
+		{
+			const td = $("<td>").addClass("rid").appendTo(tr);
+			if (wid == bid) td.addClass("crosshatch");
+		}
+		tr.appendTo(e);
+	}
+	
+	for (let rid in table)
+		for (let mid in table[rid])
+		{
+			const [ wid, bid ] = table[rid][mid];
+			const w = e.find(`tr:nth-child(${1 + wid}) td.rid:nth-child(${1 + bid})`);
+			w.addClass("white").text(rid);
+			const b = e.find(`tr:nth-child(${1 + bid}) td.rid:nth-child(${1 + wid})`);
+			b.addClass("black").text(rid);
+		}
+	
+	return e;
 }
 
 export function berger(playersCount)
