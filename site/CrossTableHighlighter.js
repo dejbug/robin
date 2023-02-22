@@ -1,3 +1,5 @@
+import { berger } from "./berger.js";
+
 // TODO: Add a facility to remember multiple highlights.
 // TODO: Maybe add highlight groups? Like transparency layers.
 
@@ -13,6 +15,7 @@ export class CrossTableHighlighter
 		this.roundHighlightWhiteClass = `${this.table.prefix}highlight-round-white`;
 		this.roundHighlightBlackClass = `${this.table.prefix}highlight-round-black`;
 		this.roundHighlightDeskClass = `${this.table.prefix}highlight-round-desk`;
+		this.roundIndexHighlightClass = `${this.table.prefix}highlight-round-index`;
 		
 		this.lastCellHighlight = null;
 		this.lastRowHighlight = null;
@@ -185,21 +188,32 @@ export class CrossTableHighlighter
 			}
 	}
 
-	setRoundHighlight(pairings, on = true)
+	setRoundHighlight(index, on = true)
 	{
-		// TODO: Set a highlight on the round index too.
 		// FIXME: The code is messy. Clean it up.
 		
-		if (this.lastRoundHighlight !== null)
+		if (this.lastRoundHighlight != null)
 		{
 			const lastRoundHighlight = this.lastRoundHighlight;
 			this.lastRoundHighlight = null;
 			this.setRoundHighlight(lastRoundHighlight, false);
 		}
 		
-		if (pairings === null) return;
+		if (index == 0 || index == null) return;
+		
+		this.lastRoundHighlight = on ? index : null;
 		
 		const playerCount = this.table.model.matches.pa.length;
+		
+		const bergerTable = berger(playerCount);
+		if (bergerTable == null) return;
+		
+		const pairings = bergerTable[index];
+		if (pairings == null) return;
+		
+		const th = this.table.getCell(0, 1 + index);
+		if (on && this.table.opt.showRids) th.classList.add(this.roundIndexHighlightClass);
+		else th.classList.remove(this.roundIndexHighlightClass);
 		
 		let desk = 1;
 		
@@ -262,7 +276,5 @@ export class CrossTableHighlighter
 				}
 			}
 		});
-		
-		this.lastRoundHighlight = on ? pairings.slice(0) : null;
 	}
 }

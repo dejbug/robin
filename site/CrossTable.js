@@ -2,7 +2,28 @@ import { getCellCoords } from "./tools.js";
 import { CrossTableHighlighter } from "./CrossTableHighlighter.js";
 import { Matches } from "./Matches.js";
 import { SortedMatches } from "./SortedMatches.js";
-import { berger } from "./berger.js";
+
+// The problem is that once we start the tournament
+//	with N players, we've kinda committed to the
+//	full N-1 rounds. Yes we can pull some matches
+//	forward but in many cases (if not most) there is
+//	no way to pack the remaining matches into fewer
+//	rounds. But maybe for larger tournaments, or for
+//	fortuitously indexed dropouts, it may still be
+//	(efficiently) possible to cut a round or two. So:
+
+// TODO: Devise a way to highlight up to N-1 rounds,
+//	regardless of dropouts. See: onPlayerIndexClicked
+
+// TODO: If sorting by points and some players' points are equal
+//	let them have the same id (rank). Also add an option for this.
+
+// TODO: When a score is updated make it pulse to draw
+//	attention to it. When it is toggled via remote-control
+//	auto-re-sort the table? Don't re-sort when updated
+//	from within the crosstable or warp the cursor to stay
+//	over the cell (this could be too confusing though).
+//	See: onScoreClicked
 
 // TODO: Add a pairings class. Make the column header
 //	sensitive to round status.
@@ -62,6 +83,7 @@ export class CrossTable
 		this.model = null;
 		this.count = 0;
 		this.lastRoundHighlightIndex = 0;
+		this.lastRoundHighlightIsPermanent = false;
 		this.hi = new CrossTableHighlighter(this);
 		this.opt = {
 			keepLastHighlight : true,
@@ -71,6 +93,7 @@ export class CrossTable
 			pushDownDropouts : true,
 			smartResort : true,
 			dropoutColSensitive : false,
+			showRids : false,
 		};
 	}
 
@@ -99,12 +122,14 @@ export class CrossTable
 			player : `${this.prefix}celltype-player`,
 		};
 		
+		const nameText = this.opt.showRids ? "Name/R" : "Name";
+		
 		this.count = count;
 		this.table = $("<table>");
 		
 		let tr = $("<tr>");
 		$("<th>").text("#").addClass(cc.sortable).appendTo(tr);
-		$("<th>").text("Name").addClass(cc.sortable).appendTo(tr);
+		$("<th>").text(nameText).addClass(cc.sortable).appendTo(tr);
 		for (let row = 1; row <= count; ++row)
 			$("<th>").addClass(cc.player).appendTo(tr);
 		$("<th>").text("Punkte").addClass(cc.sortable).appendTo(tr);
@@ -165,26 +190,33 @@ export class CrossTable
 
 	fillIds()
 	{
-		// TODO: If sorting by points and some players' points are equal
-		//	let them have the same id (rank). Also add an option for this.
-		
 		for (let col = 0, id = 0; col < this.count; ++col)
 		{
 			const pid = this.model.row2pid[col + 1];
 			const th = $(this.table.find("th")[col + 2]);
-			if (this.opt.showPidsInsteadOfIndex)
-				th.text(pid);
-			else if (this.model.matches.dropouts.indexOf(pid) < 0)
-				th.text(id += 1);
+			
+			if (this.opt.showRids)
+				th.text(col + 1);
+			else
+			{
+				if (this.model.matches.isDropout(pid)) continue;
+				else if (this.opt.showPidsInsteadOfIndex)
+					th.text(pid);
+				else
+					th.text(id += 1);
+			}
 		}
 		
 		for (let row = 0, id = 0; row < this.count; ++row)
 		{
 			const pid = this.model.row2pid[row + 1];
 			const td = $(this.getCell(row + 1, 0));
+			
+			if (this.model.matches.isDropout(pid)) continue;
+			
 			if (this.opt.showPidsInsteadOfIndex)
 				td.text(pid);
-			else if (this.model.matches.dropouts.indexOf(pid) < 0)
+			else
 				td.text(id += 1);
 		}
 	}
@@ -256,16 +288,6 @@ export class CrossTable
 
 	onMouseDown(e)
 	{
-		// TODO: Distinguish between player clicks and player index/id clicks.
-		//	The latter should be handled as usual on left click but may be
-		//	optionally treated as round ids on middle clicks. Clicking on a
-		//	round id could highlight the score cells for the pairings of that round.
-		//	This would cut down on our layout real estate since there wouldn't
-		//	be a need for an extra pairings table. Instead of an empty score cell,
-		//	yet to be filled with the match result, it could be filled with the desk
-		//	number on which the player is going to play. The black-or-white mark
-		//	needs to be styled more prominently though.
-		
 		e.preventDefault();
 		
 		const cc = getCellCoords(e.target);
@@ -275,8 +297,10 @@ export class CrossTable
 		{
 			if (cc.col == 0)
 				this.onIdHeaderClicked(e);
+			
 			else if (cc.col == 1)
 				this.onNameHeaderClicked(e);
+			
 			else
 			{
 				if (cc.col - 2 == this.count)
@@ -288,17 +312,11 @@ export class CrossTable
 						e.originalEvent.button);
 			}
 		}
-		else if (cc.row >= 1)
+		else
 		{
-			if (cc.col == 0)
-				// this.onPlayerIndexClicked(e, cc.row,
+			if (cc.col <= 1)
 				this.onPlayerClicked(e, cc.row,
 					this.getNameCell(cc.row).innerText,
-					e.originalEvent.button);
-			
-			else if (cc.col == 1)
-				this.onPlayerClicked(e, cc.row,
-					e.target.innerText,
 					e.originalEvent.button);
 			
 			else if (cc.col >= 2 && cc.col - 1 != cc.row && cc.col - 1 <= this.count)
@@ -309,23 +327,10 @@ export class CrossTable
 
 	onPlayerIndexClicked(e, row, text, button)
 	{
-		// This works nicely since for x players there are at most
-		//	x rounds, so clicking dropouts should never trigger
-		//	a round higlight event.
+		if (this.opt.showRids)
+			return this.toggleRoundHighlight(row, button == 1);
 		
-		if (e.button == 0)
-			return this.onPlayerClicked(e, row, text, button);
-		else if (e.button == 1)
-		{
-			const pid = this.model.row2pid[row];
-			if (!this.model.matches.isDropout(pid))
-			{
-				const row2index = this.model.row2index();
-				return this.toggleRoundHighlight(row2index[row]);
-			}
-			if (this.opt.dropoutColSensitive)
-				return this.onPlayerClicked(e, row, text, button);
-		}
+		return this.onPlayerClicked(e, row, text, button);
 	}
 
 	onPlayerClicked(e, row, text, button)
@@ -338,18 +343,15 @@ export class CrossTable
 		// In reality the highlight is set though but is hidden.
 		
 		const pid = this.model.row2pid[row];
-		if (button == 0) this.hi.togglePlayerHighlight(pid);
-		if (button == 1) this.togglePlayerEnabled(pid);
+		const isDropout = this.model.matches.isDropout(pid);
+		if (button == 0 && (!isDropout || this.opt.dropoutColSensitive))
+			this.hi.togglePlayerHighlight(pid);
+		if (button == 1)
+			this.togglePlayerEnabled(pid);
 	}
 
 	onScoreClicked(e, row, col, text, button)
 	{
-		// TODO: When a score is updated make it pulse to draw
-		//	attention to it. When it is toggled via remote-control
-		//	auto-re-sort the table? Don't re-sort when updated
-		//	from within the crosstable or warp the cursor to stay
-		//	over the cell (this could be too confusing though).
-		
 		const rowpid = this.model.row2pid[row];
 		if (this.model.matches.isDropout(rowpid)) return;
 		const colpid = this.model.row2pid[col];
@@ -378,8 +380,15 @@ export class CrossTable
 
 	onNameHeaderClicked(e)
 	{
-		if (!this.model) return;
-		this.model.sortByName(null, this.opt.pushDownDropouts);
+		if (e.button == 0)
+		{
+			if (!this.model) return;
+			this.model.sortByName(null, this.opt.pushDownDropouts);
+		}
+		else if (e.button == 1)
+		{
+			this.toggleRoundIdMode();
+		}
 		this.update();
 	}
 
@@ -477,18 +486,27 @@ export class CrossTable
 		this.update();	// FIXME: We need to update a single cell here.
 	}
 
-	toggleRoundHighlight(index)
+	toggleRoundIdMode()
 	{
-		if (this.lastRoundHighlightIndex == index)
+		this.opt.showRids = !this.opt.showRids;
+		
+		if (!this.opt.showRids && !this.lastRoundHighlightIsPermanent)
+			this.toggleRoundHighlight(this.lastRoundHighlightIndex);
+	}
+
+	toggleRoundHighlight(index, permanent = false)
+	{
+		this.hi.setRoundHighlight(0);
+		
+		if (this.lastRoundHighlightIndex == index || index == 0 || index == null)
 		{
-			this.hi.setRoundHighlight(null);
 			this.lastRoundHighlightIndex = 0;
+			this.lastRoundHighlightIsPermanent = false;
 			return;
 		}
-		this.lastRoundHighlightIndex = index;
 		
-		const playerCount = this.model.matches.pa.length;
-		const pairings = berger(playerCount);
-		this.hi.setRoundHighlight(pairings[index]);
+		this.lastRoundHighlightIndex = index;
+		this.lastRoundHighlightIsPermanent = permanent;
+		this.hi.setRoundHighlight(index);
 	}
 }
