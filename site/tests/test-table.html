@@ -1,0 +1,71 @@
+<!doctype html>
+<style>
+table { border-collapse: collapse; cursor: pointer; user-select: none; font-family: sans; font-size: 10pt; }
+table, th, td { border: 1px solid grey; padding: .3em; }
+th, td { padding: 5px; min-width: 2em; text-align: center; }
+.red { color: red; }
+.green { color: green; }
+.blue { color: blue; }
+</style>
+<div id="table"></div>
+<script type="module">
+import { Table } from "../table.js";
+import { printDocumentPrototype, printElementPrototype } from "../info.js";
+
+printDocumentPrototype();
+printElementPrototype();
+
+const table = new Table(4, 3);
+table.render();
+const containerElement = document.getElementById("table");
+containerElement.append(table.rendered);
+
+table.vset(0,0,"#");
+table.cell(1,1).innerText = "hi";
+
+console.log(table.cfind(1,1,"red","green","blue"));
+console.log(table.cifind(1,1,"red","green","blue"));
+table.ctog(1,1,"red", "green", "blue");
+console.log(table.cfind(1,1,"red","green","blue"));
+console.log(table.cifind(1,1,"red","green","blue"));
+table.ctog(1,1,"red", "green", "blue");
+console.log(table.cfind(1,1,"red","green","blue"));
+console.log(table.cifind(1,1,"red","green","blue"));
+table.ctog(1,1,"red", "green", "blue");
+console.log(table.cfind(1,1,"red","green","blue"));
+console.log(table.cifind(1,1,"red","green","blue"));
+table.ctog(1,1,"red", "green", "blue");
+console.log(table.cfind(1,1,"red","green","blue"));
+console.log(table.cifind(1,1,"red","green","blue"));
+table.ctog(1,1,"red", "green", "blue");
+console.log(table.cfind(1,1,"red","green","blue"));
+console.log(table.cifind(1,1,"red","green","blue"));
+
+console.log(table.ahas(1,1,"data-cell"));
+table.aadd(1,1,"data-cell");
+console.log(table.ahas(1,1,"data-cell"));
+table.arem(1,1,"data-cell");
+console.log(table.ahas(1,1,"data-cell"));
+
+
+console.log(table.afind(1,1,"data-val","red","green","blue"));
+console.log(table.aifind(1,1,"data-val","red","green","blue"));
+table.atog(1,1,"data-val","red", "green", "blue");
+console.log(table.afind(1,1,"data-val","red","green","blue"));
+console.log(table.aifind(1,1,"data-val","red","green","blue"));
+table.atog(1,1,"data-val","red", "green", "blue");
+console.log(table.afind(1,1,"data-val","red","green","blue"));
+console.log(table.aifind(1,1,"data-val","red","green","blue"));
+table.atog(1,1,"data-val","red", "green", "blue");
+console.log(table.afind(1,1,"data-val","red","green","blue"));
+console.log(table.aifind(1,1,"data-val","red","green","blue"));
+table.atog(1,1,"data-val","red", "green", "blue");
+console.log(table.afind(1,1,"data-val","red","green","blue"));
+console.log(table.aifind(1,1,"data-val","red","green","blue"));
+table.atog(1,1,"data-val","red", "green", "blue");
+console.log(table.afind(1,1,"data-val","red","green","blue"));
+console.log(table.aifind(1,1,"data-val","red","green","blue"));
+table.atog(1,1,"data-val","red", "green", "blue");
+
+
+</script>

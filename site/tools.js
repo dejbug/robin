@@ -37,3 +37,8 @@ export function keys(arr, test = null)
 			return arr[key] && (!test || test(arr, key)) ? key : null;
 		});
 }
+
+export function choose(arr)
+{
+	return arr[Math.round(Math.random() * (arr.length - 1))]
+}

@@ -1,3 +1,5 @@
+import { choose } from "../tools.js";
+
 export function generateRoundsTable(playersCount)
 {
 	if (playersCount < 2) return null;
@@ -23,6 +25,47 @@ export function generateRoundsTable(playersCount)
 	for (let c = 0; c < roundsCount; ++c)
 		row[c + 1] = c % 2 == 0 ? i++ : j++;
 	table[playersCount] = row;
+	
+	return table;
+}
+
+export function generateRandomRoundsTable(playersCount)
+{
+	if (playersCount < 2) return null;
+	playersCount = playersCount + (playersCount % 2);
+	const roundsCount = playersCount - 1;
+	
+	const table = [];
+	const players = [];
+	for (let pid = 1; pid <= playersCount; ++pid)
+	{
+		players.push(pid);
+		table[pid] = [];
+		for (let rid = 1; rid <= roundsCount; ++rid)
+			table[pid][rid] = null;
+	}
+	
+	for (let pid = 1; pid <= playersCount; ++pid)
+		for (let rid = 1; rid <= roundsCount; ++rid)
+		{
+			const exclude = [];
+			for (let i = 1; i < pid; ++i) exclude.push(table[i][rid]);
+			const oid = exclude.indexOf(pid);
+			if (oid >= 0)
+			{
+				const opp = oid + 1;
+				table[pid][rid] = opp;
+				// console.log(pid, rid, null, opp);
+				continue;
+			}
+			for (let i = 1; i <= pid; ++i) exclude.push(i);
+			for (let i = 1; i < rid; ++i) exclude.push(table[pid][i]);
+			const include = players.filter(i => !exclude.includes(i));
+			const choice = choose(include);
+			if (!choice) return null;
+			table[pid][rid] = choice;
+			// console.log(pid, rid, exclude, include, choice);
+		}
 	
 	return table;
 }
@@ -91,7 +134,13 @@ export function sortBergerTable(table, matches = true, rounds = true)
 	return out;
 }
 
-export function distributeColors(berger)
+export function distributeRoundsColors(rt)
+{
+	
+	return rt;
+}
+
+export function distributeBergerColors(berger)
 {
 	let pp = [];
 	const addWhite = p => pp[p] += 1;
@@ -163,11 +212,11 @@ export function renderBergerColorsTable1(bt, caption = null)
 	const rt = roundsTableFromBergerTable(bt);
 	const ct = colorsTableFromBergerTable(bt);
 	
-	const e = $("<table>").addClass("berger-colors-table");
+	const e = $("<table>").addClass("berger-colors-table").attr("berger-colors-table-type", 1);
 	if (caption) $("<caption>").text(caption).appendTo(e);
 	
 	const tr = $("<tr>");
-	$("<th>").text('#').appendTo(tr);
+	$("<th>").text("#").appendTo(tr);
 	for (let pid in rt)
 	{
 		for (let rid in rt[pid])
@@ -191,42 +240,80 @@ export function renderBergerColorsTable1(bt, caption = null)
 	return e;
 }
 
-export function renderBergerColorsTable2(table, caption = null)
+export function renderBergerColorsTable2(bt, caption = null)
 {
-	const playerCount = Object.keys(table).length + 1;
+	const playerCount = Object.keys(bt).length + 1;
 	
-	const e = $("<table>").addClass("berger-colors-table");
+	const e = $("<table>").addClass("berger-colors-table").attr("berger-colors-table-type", 2);
 	if (caption) $("<caption>").text(caption).appendTo(e);
 	
 	const tr = $("<tr>");
-	$("<th>").text('#').appendTo(tr);
+	$("<th>").text("#").appendTo(tr);
 	for (let pid = 1; pid <= playerCount; ++pid)
-		$("<th>").addClass("bid").text(pid).appendTo(tr);
+		$("<th>").addClass("oid").text(pid).appendTo(tr);
 	tr.appendTo(e);
 	
 	for (let wid = 1; wid <= playerCount; ++wid)
 	{
 		const tr = $("<tr>");
-		$("<td>").addClass("wid").text(`${wid}`).appendTo(tr);
+		$("<td>").addClass("pid").text(`${wid}`).appendTo(tr);
 		for (let bid = 1; bid <= playerCount; ++bid)
 		{
-			const td = $("<td>").addClass("rid").appendTo(tr);
+			const td = $("<td>").appendTo(tr);
 			if (wid == bid) td.addClass("crosshatch");
+			else td.addClass("rid");
 		}
 		tr.appendTo(e);
 	}
 	
-	for (let rid in table)
-		for (let mid in table[rid])
+	const rows = e.find("tr");
+	
+	for (let rid in bt)
+		for (let mid in bt[rid])
 		{
-			const [ wid, bid ] = table[rid][mid];
-			const w = e.find(`tr:nth-child(${1 + wid}) td.rid:nth-child(${1 + bid})`);
-			w.addClass("white").text(rid);
-			const b = e.find(`tr:nth-child(${1 + bid}) td.rid:nth-child(${1 + wid})`);
-			b.addClass("black").text(rid);
+			const [ wid, bid ] = bt[rid][mid];
+			const w = rows[wid].children[bid];
+			const b = rows[bid].children[wid];
+			w.classList.add("white");
+			b.classList.add("black");
+			w.innerText = rid;
+			b.innerText = rid;
 		}
 	
 	return e;
+}
+
+export function colorSwitchingHandler(element)
+{
+	const toggleColor = (a, b) => {
+		const white = a.classList.contains("white");
+		a.classList.remove(white ? "white" : "black");
+		b.classList.remove(white ? "black" : "white");
+		a.classList.add(white ? "black" : "white");
+		b.classList.add(white ? "white" : "black");
+	};
+	element = $(element);
+	element.on("mousedown", e => {
+		const tt = element.attr("berger-colors-table-type");
+		if (tt == 1)
+		{
+			const pid = e.target.parentNode.rowIndex;
+			const rid = e.target.cellIndex;
+			if (pid < 1 || rid < 1) return;
+			const oid = e.target.innerText;
+			const opp = element.find("tr")[oid].children[rid];
+			toggleColor(e.target, opp);
+		}
+		if (tt == 2)
+		{
+			const pid = e.target.parentNode.rowIndex;
+			const oid = e.target.cellIndex;
+			if (pid < 1 || oid < 1 || pid == oid) return;
+			const opp = element.find("tr")[oid].children[pid];
+			toggleColor(e.target, opp);
+		}
+	});
+	return element;
 }
 
 export function berger(playersCount)

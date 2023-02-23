@@ -56,14 +56,30 @@ td, th { border: thin solid black; padding: .3em; }
 #pairings2 td.roundsel.black { background-color: black; color: lightgrey; }
 #pairings2 td.roundsel.white { background-color: grey; color: white; }
 
+#comparison-off {
+	margin: 3em;
+	display: grid;
+	gap: 1em;
+	grid-template-columns: auto auto;
+	grid-template-rows: auto;
+}
+#comparison-off > table {
+	max-width: 1em;
+}
+
 .row { display: flex; flex-flow: row nowrap; gap: 1em; }
 .column { display: flex; flex-flow: column nowrap; gap: 1em; }
-.padded { padding: 1em; ]
+.padded { padding: 1em; }
 
 .duplicate { color: crimson; }
+
+.red { color: red; }
+.green { color: green; }
+.blue { color: blue; }
 </style>
 </head>
 <body>
+<div id="table"></div>
 <div class="padded row">
 	<div id="berger-o-s"></div>
 	<div id="berger-g"></div>
@@ -91,6 +107,20 @@ td, th { border: thin solid black; padding: .3em; }
 		<div id="pairings2"></div>
 	</div>
 </div>
+<div id="comparison" class="column">
+</div>
+<script type="module">
+// import { Table } from "../table.js";
+// import { printDocumentPrototype, printElementPrototype } from "../info.js";
+
+// printDocumentPrototype();
+// printElementPrototype();
+
+// const table = new Table(4, 3);
+// table.render();
+// const containerElement = document.getElementById("table");
+// containerElement.append(table.rendered);
+</script>
 <script src="../vendor/jquery-3.6.3.min.js"></script>
 <script src="../data/Blitzturnier-22-09-Tabelle.csv.js"></script>
 <script type="module">
@@ -108,11 +138,16 @@ td, th { border: thin solid black; padding: .3em; }
 </script>
 <script type="module">
 import {
-	generateRoundsTable, bergerTableFromRoundsTable,
-	sortBergerTable, distributeColors,
+	generateRoundsTable, generateRandomRoundsTable,
+	bergerTableFromRoundsTable,
+	sortBergerTable,
+	distributeBergerColors, distributeRoundsColors,
 	renderRoundsTable, renderBergerTable,
-	renderBergerColorsTable1, renderBergerColorsTable2
+	renderBergerColorsTable1, renderBergerColorsTable2,
+	colorSwitchingHandler,
 } from "../berger.js";
+
+// import { choose } from "../tools.js";
 
 const playerCount = 8;
 let roundsel = 0;
@@ -517,7 +552,7 @@ function main(berger)
 	const berger_o = getBergerTable(berger, 12);
 	const berger_o_s = sortBergerTable(getBergerTable(berger, 12));
 	const berger_g = bergerTableFromRoundsTable(generateRoundsTable(12));
-	const berger_g_c = distributeColors(bergerTableFromRoundsTable(generateRoundsTable(12)));
+	const berger_g_c = distributeBergerColors(bergerTableFromRoundsTable(generateRoundsTable(12)));
 	
 	renderBergerTable(berger_o_s, "Original (sorted)").appendTo("#berger-o-s");
 	renderBergerTable(berger_g, "Generated").appendTo("#berger-g");
@@ -526,6 +561,71 @@ function main(berger)
 	
 	renderBergerColorsTable1(berger_o, "Original Berger Table").appendTo("#berger-o-ct");
 	renderBergerColorsTable1(berger_g_c, "Generated Berger Table").appendTo("#berger-g-ct");
+	
+	for (let pc = 4; pc <= 16; pc += 2)
+	{
+		const org = getBergerTable(berger, pc);
+		const gen = bergerTableFromRoundsTable(distributeRoundsColors(generateRoundsTable(pc)));
+		const row = $("<div>").addClass("row");
+		colorSwitchingHandler(renderBergerColorsTable1(org, "Original")).appendTo(row);
+		colorSwitchingHandler(renderBergerColorsTable1(gen, "Generated")).appendTo(row);
+		colorSwitchingHandler(renderBergerColorsTable2(org, "Original")).appendTo(row);
+		colorSwitchingHandler(renderBergerColorsTable2(gen, "Generated")).appendTo(row);
+		row.appendTo("#comparison");
+	}
+	
+	// console.log(choose(["a", "b", "c"]));
+	
+	const swapCellColor = (td, tab) => {
+		const row = td.parentNode.rowIndex;
+		const col = td.cellIndex;
+		const tt = tab.attr("berger-colors-table-type");
+		const rows = tab[0].querySelectorAll("tr");
+		let cell = null;
+		let opp = null;
+		if (tt == 1)
+		{
+			const pid = row;
+			const oid = col;
+			const rid = parseInt(td.innerText);
+			cell = rows[pid].children[rid];
+			opp = rows[oid].children[rid];
+		}
+		else if (tt == 2)
+		{
+			const pid = row;
+			const rid = col;
+			const oid = parseInt(td.innerText);
+			const rows = tab[0].querySelectorAll("tr");
+			cell = rows[pid].children[oid];
+			opp = rows[oid].children[pid];
+		}
+		else return;
+		
+		const white = cell.classList.contains("white");
+		cell.classList.remove(white ? "white" : "black");
+		cell.classList.add(white ? "black" : "white");
+		opp.classList.remove(white ? "black" : "white");
+		opp.classList.add(white ? "white" : "black");
+	};
+	
+	const tries = 10;
+	for (let i = 0; i < tries; ++i)
+	{
+		let gen = generateRandomRoundsTable(8);
+		if (!gen) continue;
+		
+		const row = $("<div>").addClass("row");
+		gen = bergerTableFromRoundsTable(distributeRoundsColors(gen));
+		const a = colorSwitchingHandler(renderBergerColorsTable1(gen, "gen.rand-1")).appendTo(row);
+		const b = colorSwitchingHandler(renderBergerColorsTable2(gen, "gen.rand-2")).appendTo(row);
+		row.appendTo("#table");
+		
+		a.on("mousedown", e => swapCellColor(e.target, b));
+		b.on("mousedown", e => swapCellColor(e.target, a));
+		
+		break;
+	}
 }
 
 $(init);
