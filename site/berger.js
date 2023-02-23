@@ -316,6 +316,45 @@ export function colorSwitchingHandler(element)
 	return element;
 }
 
+export function connectColorTables(a, b)
+{
+	const swapCellColor = (td, tab) => {
+		const row = td.parentNode.rowIndex;
+		const col = td.cellIndex;
+		const tt = tab.attr("berger-colors-table-type");
+		const rows = tab[0].querySelectorAll("tr");
+		let cell = null;
+		let opp = null;
+		if (tt == 1)
+		{
+			const pid = row;
+			const oid = col;
+			const rid = parseInt(td.innerText);
+			cell = rows[pid].children[rid];
+			opp = rows[oid].children[rid];
+		}
+		else if (tt == 2)
+		{
+			const pid = row;
+			const rid = col;
+			const oid = parseInt(td.innerText);
+			const rows = tab[0].querySelectorAll("tr");
+			cell = rows[pid].children[oid];
+			opp = rows[oid].children[pid];
+		}
+		else return;
+		
+		const white = cell.classList.contains("white");
+		cell.classList.remove(white ? "white" : "black");
+		cell.classList.add(white ? "black" : "white");
+		opp.classList.remove(white ? "black" : "white");
+		opp.classList.add(white ? "white" : "black");
+	};
+	
+	a.on("mousedown", e => swapCellColor(e.target, b));
+	b.on("mousedown", e => swapCellColor(e.target, a));
+}
+
 export function berger(playersCount)
 {
 	if (playersCount < 3 || playersCount > 16) return null;
