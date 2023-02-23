@@ -1,4 +1,4 @@
-import { choose } from "../tools.js";
+import { choose } from "./tools.js";
 
 export function generateRoundsTable(playersCount)
 {
