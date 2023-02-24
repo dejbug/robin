@@ -67,6 +67,10 @@ td, th { border: thin solid black; padding: .3em; }
 	max-width: 1em;
 }
 
+#table div {
+	padding: 1em;
+}
+
 .row { display: flex; flex-flow: row nowrap; gap: 1em; }
 .column { display: flex; flex-flow: column nowrap; gap: 1em; }
 .padded { padding: 1em; }
@@ -137,18 +141,6 @@ td, th { border: thin solid black; padding: .3em; }
 	table.update();
 </script>
 <script type="module">
-import {
-	generateRoundsTable, generateRandomRoundsTable,
-	bergerTableFromRoundsTable,
-	sortBergerTable,
-	distributeBergerColors, distributeRoundsColors,
-	renderRoundsTable, renderBergerTable,
-	renderBergerColorsTable1, renderBergerColorsTable2,
-	colorSwitchingHandler, connectColorTables,
-} from "../berger.js";
-
-// import { choose } from "../tools.js";
-
 const playerCount = 8;
 let roundsel = 0;
 let dropouts = [];
@@ -530,6 +522,19 @@ class RelabelerTable
 	}
 }
 
+import {
+	generateRoundsTable, generateRandomRoundsTable,
+	bergerTableFromRoundsTable,
+	sortBergerTable,
+	distributeBergerColors, distributeRoundsColors,
+	renderRoundsTable, renderBergerTable,
+	renderBergerColorsTable1, renderBergerColorsTable2,
+	colorSwitchingHandler, connectColorTables,
+	calcTableCount,
+} from "../berger.js";
+
+// import { choose } from "../tools.js";
+
 function main(berger)
 {
 	pairings1("#pairings1", berger);
@@ -578,20 +583,29 @@ function main(berger)
 	
 	// console.log(choose(["a", "b", "c"]));
 	
-	const tries = 10;
-	for (let i = 0; i < tries; ++i)
+	const attempts = 10;
+	let attempt = null;
+	let gen = null;
+	for (attempt = 1; attempt <= attempts; ++attempt)
 	{
-		let gen = generateRandomRoundsTable(8);
+		gen = generateRandomRoundsTable(8);
 		if (!gen) continue;
 		
 		const row = $("<div>").addClass("row");
-		gen = bergerTableFromRoundsTable(distributeRoundsColors(gen));
-		const a = colorSwitchingHandler(renderBergerColorsTable1(gen, "gen.rand-1")).appendTo(row);
-		const b = colorSwitchingHandler(renderBergerColorsTable2(gen, "gen.rand-2")).appendTo(row);
+		// gen = bergerTableFromRoundsTable(distributeRoundsColors(gen));
+		// const a = colorSwitchingHandler(renderBergerColorsTable1(gen, "gen.rand-1")).appendTo(row);
+		// const b = colorSwitchingHandler(renderBergerColorsTable2(gen, "gen.rand-2")).appendTo(row);
+		renderRoundsTable(gen).appendTo(row);
 		row.appendTo("#table");
-		connectColorTables(a, b);
+		// connectColorTables(a, b);
 		break;
 	}
+	if (!gen) $("<span>").appendTo("#table")
+		.text(`Was unable to generate random colors table in ${attempts} attempt(s).`);
+	else $("<span>").appendTo("#table")
+		.text(`Generated random colors table in ${attempt} attempt(s).`);
+	
+	// for (let pc = 0; pc < 20; ++pc) console.log(pc, calcTableCount(pc));
 }
 
 $(init);

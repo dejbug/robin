@@ -42,3 +42,47 @@ export function choose(arr)
 {
 	return arr[Math.round(Math.random() * (arr.length - 1))]
 }
+
+function poprandom(arr)
+{
+	// TODO: I'm not sure what's going on with JS arrays. If I
+	//	pop or set length -= 1 (which should both just truncate
+	//	the array) the Firefox console shows me a length of 0.
+	//	We will have to define our own helper class.
+	if (arr.length <= 0) return null;
+	const i = Math.round(Math.random() * (arr.length - 1));
+	const e = arr[i];
+	arr[i] = arr[arr.length - 1];
+	console.log(i, e, arr.length, arr[arr.length - 1], arr);
+	console.log("%d:%d | %d:%d", i+1, e, arr.length, arr[arr.length - 1], arr);
+	// --arr.length;
+	arr.pop();
+	return e;
+}
+
+export class Stack
+{
+	// We need this because poprandom() isn't quite right.
+	// TODO: Maybe rename it to RandomStack and make poprandom the pop?
+	
+	constructor()
+	{
+		this.length = 0;
+		this.data = [];
+	}
+	
+	empty() { return this.length <= 0; }
+	push(e) { this.data[this.length++] = e; }
+	pop() { return this.length > 0 ? this.data[--this.length] : null; }
+	
+	poprandom()
+	{
+		if (this.length <= 0) return null;
+		const i = Math.round(Math.random() * (this.length - 1));
+		const e = this.data[i];
+		this.data[i] = this.data[this.length - 1];
+		this.data[this.length - 1] = null;
+		--this.length;
+		return e;
+	}
+}

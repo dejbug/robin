@@ -1,4 +1,4 @@
-import { choose } from "./tools.js";
+import { choose, Stack } from "./tools.js";
 
 export function generateRoundsTable(playersCount)
 {
@@ -30,6 +30,53 @@ export function generateRoundsTable(playersCount)
 }
 
 export function generateRandomRoundsTable(playersCount)
+{
+	if (playersCount < 2) return null;
+	playersCount = playersCount + (playersCount % 2);
+	const roundsCount = playersCount - 1;
+	
+	const table = [];
+	const players = new Stack();
+	for (let pid = 1; pid <= playersCount; ++pid)
+	{
+		table[pid] = [];
+		for (let rid = 1; rid <= roundsCount; ++rid)
+			table[pid][rid] = null;
+		if (pid < playersCount) players.push(pid);
+	}
+	
+	const cellsCount = playersCount * roundsCount;
+	let cellsTouched = 0;
+	
+	for (let offset = 0; offset < roundsCount; ++offset)
+	{
+		const roid = players.empty() ? playersCount : players.pop();
+		
+		for (let rid = 1; rid <= roundsCount; ++rid)
+		{
+			cellsTouched += 1;
+			const pid = (offset + rid - 1) % roundsCount + 1;
+			const oid = pid == roid ? playersCount : roid;
+			const skip1 = table[pid][rid] !== null;
+			const skip2 = table[oid][rid] !== null;
+			let notes = "";
+			notes += (pid == roid) ? "s|" : "-|";
+			notes += (skip1) ? "1|" : "-|";
+			notes += (skip1) ? "2" : "-";
+			console.log("%d:%d=%d %d:%d=%d |%s|", pid, rid, oid, oid, rid, pid, notes);
+			// if (skip) continue;
+			if (table[pid][rid] == null) table[pid][rid] = oid;
+			if (table[oid][rid] == null) table[oid][rid] = pid;
+		}
+	}
+	
+	const cellsLeftOut = cellsCount - cellsTouched;
+	console.log({cellsCount, cellsTouched, cellsLeftOut});
+	
+	return table;
+}
+
+export function generateRandomRoundsTable1(playersCount)
 {
 	if (playersCount < 2) return null;
 	playersCount = playersCount + (playersCount % 2);
@@ -97,23 +144,23 @@ export function roundsTableFromBergerTable(t)
 	return d;
 }
 
-export function bergerTableFromRoundsTable(table)
+export function bergerTableFromRoundsTable(rt)
 {
-	let berger = [];
+	let bt = [];
 	
-	for (let rid in table[1])
-		berger[rid] = [];
+	for (let rid in rt[1])
+		bt[rid] = [];
 	
-	for (let rid in table[1])
-		for (let pid in table)
+	for (let rid in bt)
+		for (let pid in rt)
 		{
 			pid = parseInt(pid);
-			const opp = table[pid][rid];
+			const opp = rt[pid][rid];
 			if (pid < opp)
-				berger[rid].push([pid, opp])
+				bt[rid].push([pid, opp])
 		}
 	
-	return berger;
+	return bt;
 }
 
 export function sortBergerTable(table, matches = true, rounds = true)
@@ -321,6 +368,7 @@ export function connectColorTables(a, b)
 	const swapCellColor = (td, tab) => {
 		const row = td.parentNode.rowIndex;
 		const col = td.cellIndex;
+		if (row < 1 || col < 1) return;
 		const tt = tab.attr("berger-colors-table-type");
 		const rows = tab[0].querySelectorAll("tr");
 		let cell = null;
@@ -359,6 +407,33 @@ export function berger(playersCount)
 {
 	if (playersCount < 3 || playersCount > 16) return null;
 	return lut[playersCount + (playersCount % 2)];
+}
+
+export function calcTableCount(playersCount)
+{
+	// An 8-player table has 125,411,328,000 possibilities?!
+	
+	if (playersCount < 2) return 0;
+	if (playersCount == 2) return 1;
+	
+	playersCount += playersCount % 2;
+	const roundsCount = playersCount - 1;
+	
+	// Looking at a rounds table, we go from the first row to the last
+	//	and count how many permutations we can choose from.
+	//	Each choice removes a diagonal from the bottom rows.
+	//	The last two rows are entirely determined by the upper ones.	
+	// const factorial = n => n > 1 ? n * factorial(n - 1) : 1;
+	// for (let rid = roundsCount; rid > 0; --rid) count *= factorial(rid);
+	
+	let count = 1;
+	let fac = 1;
+	for (let rid = 2; rid <= roundsCount; ++rid)
+	{
+		fac *= rid;
+		count *= fac;
+	}
+	return count;
 }
 
 let lut = {
