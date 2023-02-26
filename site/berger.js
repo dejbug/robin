@@ -755,6 +755,8 @@ export function renderMapToImg(...rest)
 
 function renderMap(table, cols = 1, r = 60, rnode = 10)
 {
+	// TODO: Either delete this or call into renderMapSvg.
+	
 	const div = document.createElement("div");
 	
 	const count = Object.keys(table).length;
