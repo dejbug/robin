@@ -521,6 +521,7 @@ class RelabelerTable
 		return this;
 	}
 }
+import * as bergerjs  from "../berger.js";
 
 import {
 	generateRoundsTable, generateRandomRoundsTable,
@@ -588,8 +589,10 @@ function main(berger)
 	let gen = null;
 	for (attempt = 1; attempt <= attempts; ++attempt)
 	{
-		gen = generateRandomRoundsTable(8);
+		gen = bergerjs.generateRandomRoundsTable1(8);
 		if (!gen) continue;
+		const [ ok, err ] = bergerjs.checkRoundsTable(gen);
+		if (!ok) console.log(err);
 		
 		const row = $("<div>").addClass("row");
 		// gen = bergerTableFromRoundsTable(distributeRoundsColors(gen));

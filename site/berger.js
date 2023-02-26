@@ -29,6 +29,36 @@ export function generateRoundsTable(playersCount)
 	return table;
 }
 
+export function checkRoundsTable(rt)
+{
+	const rr = Object.keys(rt);
+	const playersCount = rr.length;
+	if (playersCount < 2) return [ false, "playersCount < 2" ];
+	// console.log("ok: playersCount (%d)", playersCount)
+	const cc = Object.keys(rt[rr[0]]);
+	
+	let sum = 0;
+	for (let i = 1; i <= playersCount; ++i) sum += i;
+	
+	for (let r of rr)
+	{
+		let hsum = parseInt(r);
+		for (let c in rt[r]) hsum += parseInt(rt[r][c]);
+		if (hsum != sum) return [ false, `row ${r}: ${hsum} != ${sum}` ];
+		// console.log("ok: row %d (%d == %d)", r, hsum, sum)
+	}
+	
+	for (let c of cc)
+	{
+		let vsum = 0;
+		for (let r of rr) vsum += rt[r][c];
+		if (vsum != sum) return [ false, `col ${c}: ${vsum} != ${sum}` ];
+		// console.log("ok: col %d (%d == %d)", c, vsum, sum)
+	}
+	
+	return [ true, null ];
+}
+
 export function generateRandomRoundsTable(playersCount)
 {
 	if (playersCount < 2) return null;
@@ -46,15 +76,22 @@ export function generateRandomRoundsTable(playersCount)
 	}
 	
 	const cellsCount = playersCount * roundsCount;
+	let cellsConsidered = 0;
 	let cellsTouched = 0;
 	
 	for (let offset = 0; offset < roundsCount; ++offset)
 	{
-		const roid = players.empty() ? playersCount : players.pop();
+		// This works nicely, of course:
+		// const roid = players.empty() ? playersCount : players.pop();
+		// Unlike this:
+		const roid = players.empty() ? playersCount : players.poprandom();
+		// Why? There must be a way to fudge it, given how many configurations exist.
+		// It seems that the, let's call it, diagonal approach has the constraint that the
+		// higher diagonal hold a higher number.
 		
 		for (let rid = 1; rid <= roundsCount; ++rid)
 		{
-			cellsTouched += 1;
+			cellsConsidered += 1;
 			const pid = (offset + rid - 1) % roundsCount + 1;
 			const oid = pid == roid ? playersCount : roid;
 			const skip1 = table[pid][rid] !== null;
@@ -64,14 +101,17 @@ export function generateRandomRoundsTable(playersCount)
 			notes += (skip1) ? "1|" : "-|";
 			notes += (skip1) ? "2" : "-";
 			console.log("%d:%d=%d %d:%d=%d |%s|", pid, rid, oid, oid, rid, pid, notes);
-			// if (skip) continue;
-			if (table[pid][rid] == null) table[pid][rid] = oid;
-			if (table[oid][rid] == null) table[oid][rid] = pid;
+			if (!skip1) { table[pid][rid] = oid; ++cellsTouched; }
+			if (!skip2) { table[oid][rid] = pid; ++cellsTouched; }
 		}
 	}
 	
+	const [ ok, err ] = checkRoundsTable(table);
+	
 	const cellsLeftOut = cellsCount - cellsTouched;
-	console.log({cellsCount, cellsTouched, cellsLeftOut});
+	console.log("[%s] %d touched of %d considered of %d total (= %d collisions) // %s",
+		ok ? "good" : "fail",
+		cellsTouched, cellsConsidered, cellsCount, cellsLeftOut, err);
 	
 	return table;
 }
@@ -378,6 +418,7 @@ export function connectColorTables(a, b)
 			const pid = row;
 			const oid = col;
 			const rid = parseInt(td.innerText);
+			if (isNaN(rid)) return;
 			cell = rows[pid].children[rid];
 			opp = rows[oid].children[rid];
 		}
@@ -411,7 +452,10 @@ export function berger(playersCount)
 
 export function calcTableCount(playersCount)
 {
-	// An 8-player table has 125,411,328,000 possibilities?!
+	// FIXME: An 8-player table has 125,411,328,000 possibilities?!
+	//	I don't think so! Something is going wrong here.
+	//	I'm underestimating the constraints. ( Think sudoku. )
+	//	This approach is rushed and rather naive.
 	
 	if (playersCount < 2) return 0;
 	if (playersCount == 2) return 1;
@@ -515,3 +559,466 @@ let lut = {
 		15: [[8, 16], [9, 7], [10, 6], [11, 5], [12, 4], [13, 3], [14, 2], [15, 1]],
 	}
 };
+
+class Vector
+{
+	constructor(x = 0, y = 0)
+	{
+		this.x = x;
+		this.y = y;
+	}
+	
+	clone() { return new Vector(this.x, this.y); }
+	
+	smul(s) { return new Vector(this.x * s, this.y * s); }
+	sdiv(s) { return new Vector(this.x / s, this.y / s); }
+	
+	vadd(v) { return new Vector(this.x + v.x, this.y + v.y); }
+	vsub(v) { return new Vector(this.x - v.x, this.y - v.y); }
+	
+	inv() { return new Vector(this.y, -this.x); }
+	len() { return Math.sqrt(this.x * this.x, this.y * this.y); }
+	norm() { return this.sdiv(this.len()); }
+	
+	toString() { return `[${this.x} ${this.y}]`; }
+}
+Vector.fromLine = function(x1, y1, x2, y2) { return new Vector(x2 - x1, y2 - y1); }
+
+function calcRadialVectors(count)
+{
+	const vv = [];
+	const arc = Math.PI * 2 / count;
+	for (let i = 0, rad = 0; i <= count; ++i, rad += arc)
+		vv.push(new Vector(Math.cos(rad), Math.sin(rad)));
+	return vv;
+}
+
+function calcRadialPoints(count, x = 0, y = 0, r = 1)
+{
+	const vv = calcRadialVectors(count);
+	const pp = [];
+	for (let v of vv)
+		pp.push({ x: x + r * v.x, y: y + r * v.y, v });
+	return pp;
+}
+
+function drawRRMapRound(table, rid, x = 0, y = 0, r = 1, rnode = 1, pc = null)
+{
+	if (table == undefined || !(rid in table)) return "";
+	if (!(rid in table)) return "";
+	
+	pc = pc || Object.keys(table).length + 1;
+	if (pc < 2) return "";
+	
+	let html = "";
+	
+	const tx = 0;
+	const ty = rnode / 3;
+	
+	const pp = calcRadialPoints(pc, x, y, r);
+	let solo = null;
+	
+	const data = [];
+	
+	for (let m of table[rid])
+	{
+		const [ wid, bid ] = m;
+		data[wid] = { white: true, opp: bid, p: pp[wid - 1], n: pp[bid - 1], drop: wid > pc, bye: bid > pc };
+		data[bid] = { white: false, opp: wid, p: pp[bid - 1], n: pp[wid - 1], drop: bid > pc, bye: wid > pc };
+	}
+	
+	// TODO: Add a bit more space between the lines, so they
+	//	won't overlap the circles.
+	// const normal = Vector.fromLine(pp[0].x, pp[0].y, pp[1].x, pp[1].y).inv().norm();
+	// const p1 = data[1].p;
+	// const p2 = data[1].n;
+	// const normal = Vector.fromLine(p1.x, p1.y, p2.x, p2.y).inv().norm();
+	// console.log("%s", normal);
+	// const off = { x: normal.x * (rnode * 2) / pc, y: normal.y * (rnode * 2) / pc };
+	// const mid = Math.floor(pc / 4);
+	// console.log({normal, off, mid});
+	
+	for (let pid in data)
+	{
+		const d = data[pid];
+		if (d.drop || d.bye) continue;
+		if (!d.white) continue;
+		html += `<line x1="${d.p.x}" y1="${d.p.y}" x2="${d.n.x}" y2="${d.n.y}" stroke="black"/>`;
+		
+		continue;
+		
+		const { x: x1, y: y1 } = d.p;
+		const { x: x2, y: y2 } = d.n;
+		const rv = Vector.fromLine(x, y, x1, y1);
+		const tv = Vector.fromLine(x1, x2, x2, y2).sdiv(2);
+		const o = rv.vadd(tv).norm().smul(5);
+		console.log("%d: %s", pid, o);
+		// html += `<line x1="${x1 + o.x}" y1="${y1 + o.y}" x2="${x2 + o.x}" y2="${y2 + o.y}" stroke="black"/>`;
+	}
+	
+	for (let pid in data)
+	{
+		const d = data[pid];
+		if (d.drop) continue;
+		const stroke = d.bye ? "grey" : "black";
+		html += `<circle r="${rnode}" cx="${d.p.x}" cy="${d.p.y}" fill="white" stroke="${stroke}"/>`;
+		html += `<text x="${d.p.x + tx}" y="${d.p.y + ty}" font-size="${rnode}" text-anchor="middle">${pid}</text>`;
+
+	}
+	
+	return html;
+}
+
+function renderMap(table, cols = 1, r = 60, rnode = 10)
+{
+	const div = document.createElement("div");
+	
+	const count = Object.keys(table).length;
+	
+	const gap = rnode * 2;
+	const off = gap + r;
+	const step = (gap + r) * 2;
+	const rows = Math.ceil(count / cols);
+	
+	const width = cols * step;
+	const height = rows * step;
+	
+	let html = `<svg width="${width}" height="${height}">`;
+	// html += `<rect x="0" y="0" width="${width-1}" height="${height-1}" fill="white" stroke="black"/>`;
+	
+	for (let rid in table)
+	{
+		const i = (rid - 1) % cols;
+		const j = Math.floor((rid - 1) / cols);
+		// console.log(rid, i, j);
+		html += drawRRMapRound(table, rid, off + step * i, off + step * j, r, rnode);
+	}
+	
+	html += '</svg>';
+	div.innerHTML = html;
+	return div;
+}
+
+function createRandomlyGeneratedTable(pc = 8, attempts = 10)
+{
+	let gen = null;
+	let attempt = 0;
+	for (attempt = 1; attempt <= attempts; ++attempt)
+	{
+		gen = generateRandomRoundsTable1(pc);
+		if (!gen) continue;
+		const [ ok, err ] = checkRoundsTable(gen);
+		if (ok) break;
+	}
+	return [ gen, attempt ];
+}
+
+// FIXME: class Table is a patchwork of the above functions. We need to redesign it.
+
+export class Table
+{
+	constructor()
+	{
+		this.reset();
+	}
+	
+	reset()
+	{
+		this.attempts = 0;
+		
+		this.rm = undefined;
+		this.pr = undefined;
+		this.ct = undefined;
+		
+		if (this.rpr) this.rm.remove();
+		if (this.rpp) this.pr.remove();
+		if (this.rrm) this.ct.remove();
+		
+		this.rpr = undefined;
+		this.rpp = undefined;
+		this.rrm = undefined;
+	}
+	
+	ok()
+	{
+		return this.pr != undefined;
+	}
+	
+	generate(pc, attempts = 1000)
+	{
+		this.reset();
+		
+		this.attempts = attempts;
+		
+		[ this.pr, this.attempt ] = createRandomlyGeneratedTable(pc, this.attempts);
+		if (!this.pr) return false;
+		
+		this.rm = bergerTableFromRoundsTable(distributeRoundsColors(this.pr));
+		this.ct = colorsTableFromBergerTable(this.rm);
+		
+		// this.rpr = renderBergerColorsTable1(this.rm);
+		// this.rpp = renderBergerColorsTable2(this.rm);
+		// this.rrm = renderBergerTable(this.rm);
+		this.renderPR();
+		this.renderPP();
+		this.renderRM();
+		
+		// colorSwitchingHandler(this.rpr);
+		
+		this.rpr.on("mousedown", e => {
+			const row = e.target.parentNode.rowIndex;
+			const col = e.target.cellIndex;
+			const info = this.infoFromPR(row, col);
+			
+			this.toggleColorPR(info.pid, info.rid);
+			this.toggleColorPP(info.pid, info.oid);
+			this.toggleColorRM(info.rid, info.mid + 1);
+		});
+		
+		this.rpp.on("mousedown", e => {
+			const row = e.target.parentNode.rowIndex;
+			const col = e.target.cellIndex;
+			const info = this.infoFromPP(row, col);
+			
+			this.toggleColorPR(info.pid, info.rid);
+			this.toggleColorPP(info.pid, info.oid);
+			this.toggleColorRM(info.rid, info.mid + 1);
+		});
+		
+		this.rrm.on("mousedown", e => {
+			const row = e.target.parentNode.rowIndex;
+			const col = e.target.cellIndex;
+			const info = this.infoFromRM(row, col);
+			
+			this.toggleColorPR(info.pid, info.rid);
+			this.toggleColorPP(info.pid, info.oid);
+			this.toggleColorRM(info.rid, info.mid + 1);
+		});
+		
+		return true;
+	}
+	
+	infoFromPR(row, col)
+	{
+		const pid = row;
+		const rid = col;
+		const oid = this.pr[pid][rid];
+		const mid = this.rm[rid].findIndex(m => {
+			const [ w, b ] = m;
+			return w == pid && b == oid || w == oid && b == pid;
+		});
+		return { pid, rid, oid, mid };
+	}
+	
+	infoFromPP(row, col)
+	{
+		const pid = row;
+		const oid = col;
+		const rid = this.pr[pid].findIndex(val => val == oid);
+		const mid = this.rm[rid].findIndex(val => {
+			const [ w, b ] = val;
+			return w == pid && b == oid || w == oid && b == pid;
+		});
+		return { pid, rid, oid, mid };
+	}
+	
+	infoFromRM(row, col)
+	{
+		const rid = row;
+		const mid = col - 1;
+		const [ pid, oid ] = this.rm[rid][mid];
+		return { pid, rid, oid, mid };
+	}
+	
+	toggleColor(pid, rid)
+	{
+		const oid = this.pr[pid][rid];
+		if (this.ct[rid].includes(pid))
+		{
+			this.ct[rid].remove(pid);
+			this.ct[rid].push(oid);
+		}
+		else
+		{
+			this.ct[rid].remove(oid);
+			this.ct[rid].push(pid);
+		}
+	}
+	
+	getCell(tab, row, col)
+	{
+		return tab.find("tr")[row].querySelectorAll("td")[col];
+	}
+	
+	getCellPR(pid, rid)
+	{
+		return this.getCell(this.rpr, pid, rid);
+	}
+	
+	getCellPP(pid, oid)
+	{
+		return this.getCell(this.rpp, pid, oid);
+	}
+	
+	getCellRM(rid, mid)
+	{
+		return this.getCell(this.rrm, rid, mid);
+	}
+	
+	toggleColorPR(pid, rid)
+	{
+		const a = this.getCellPR(pid, rid);
+		const oid = parseInt(a.innerText);
+		const b = this.getCellPR(oid, rid);
+		
+		const white = a.classList.contains("white");
+		a.classList.remove(white ? "white" : "black");
+		b.classList.remove(white ? "black" : "white");
+		a.classList.add(white ? "black" : "white");
+		b.classList.add(white ? "white" : "black");
+	}
+	
+	toggleColorPP(pid, oid)
+	{
+		const a = this.getCellPP(pid, oid);
+		const b = this.getCellPP(oid, pid);
+		// const rid = parseInt(a.innerText);
+		
+		const white = a.classList.contains("white");
+		a.classList.remove(white ? "white" : "black");
+		b.classList.remove(white ? "black" : "white");
+		a.classList.add(white ? "black" : "white");
+		b.classList.add(white ? "white" : "black");
+	}
+	
+	toggleColorRM(rid, mid)
+	{
+		const c = this.getCellRM(rid, mid);
+		const g = c.innerText.match(/(\d+)-(\d+)/);
+		// console.log(c.innerText, g);
+		const [ _, w, b ] = g;
+		c.classList.remove("ordered");
+		c.classList.remove("unordered");
+		c.innerText = `${b}-${w}`;
+		c.classList.add(b < w ? "ordered" : "unordered");
+	}
+	
+	appendInfo(id)
+	{
+		const info = $("<span>").appendTo("#info");
+		if (this.pr) info.text(`Generated random PR-table in ${this.attempt} attempt(s).`);
+		else info.addClass("error").text(`Was unable to generate PR-table in ${this.attempts} attempt(s).`);
+	}
+	
+	appendPR(id)
+	{
+		return this.rpr ? this.rpr.appendTo(id) : undefined;
+	}
+	
+	appendPP(id)
+	{
+		return this.rpp ? this.rpp.appendTo(id) : undefined;
+	}
+	
+	appendBT(id)
+	{
+		return this.rrm ? this.rrm.appendTo(id) : undefined;
+	}
+	
+	appendMap(id, cols = 1, r = 60, rnode = 10)
+	{
+		return $(renderMap(this.rm, cols, r, rnode)).appendTo(id);
+	}
+	
+	renderPR(caption = undefined)
+	{
+		this.rpr = $("<table>").addClass("berger-colors-table").attr("berger-colors-table-type", 1);
+		if (caption) $("<caption>").text(caption).appendTo(this.rpr);
+		
+		const tr = $("<tr>");
+		$("<th>").text("#").appendTo(tr);
+		for (let pid in this.pr)
+		{
+			for (let rid in this.pr[pid])
+				$("<th>").addClass("rid").text(rid).appendTo(tr);
+			tr.appendTo(this.rpr);
+			break;
+		}
+		
+		for (let pid in this.pr)
+		{
+			const tr = $("<tr>");
+			$("<td>").addClass("pid").text(pid).appendTo(tr);
+			for (let rid in this.pr[pid])
+				$("<td>").text(this.pr[pid][rid])
+				.addClass("opp")
+				.addClass(this.ct[rid].includes(parseInt(pid)) ? "white" : "black")
+				.appendTo(tr);
+			tr.appendTo(this.rpr);
+		}
+	}
+	
+	renderPP(caption = null)
+	{
+		const playerCount = Object.keys(this.rm).length + 1;
+		
+		this.rpp = $("<table>").addClass("berger-colors-table").attr("berger-colors-table-type", 2);
+		if (caption) $("<caption>").text(caption).appendTo(e);
+		
+		const tr = $("<tr>");
+		$("<th>").text("#").appendTo(tr);
+		for (let pid = 1; pid <= playerCount; ++pid)
+			$("<th>").addClass("oid").text(pid).appendTo(tr);
+		tr.appendTo(this.rpp);
+		
+		for (let wid = 1; wid <= playerCount; ++wid)
+		{
+			const tr = $("<tr>");
+			$("<td>").addClass("pid").text(`${wid}`).appendTo(tr);
+			for (let bid = 1; bid <= playerCount; ++bid)
+			{
+				const td = $("<td>").appendTo(tr);
+				if (wid == bid) td.addClass("crosshatch");
+				else td.addClass("rid");
+			}
+			tr.appendTo(this.rpp);
+		}
+		
+		const rows = this.rpp.find("tr");
+		
+		for (let rid in this.rm)
+			for (let mid in this.rm[rid])
+			{
+				const [ wid, bid ] = this.rm[rid][mid];
+				const w = rows[wid].children[bid];
+				const b = rows[bid].children[wid];
+				w.classList.add("white");
+				b.classList.add("black");
+				w.innerText = rid;
+				b.innerText = rid;
+			}
+	}
+	
+	renderRM(caption = null)
+	{
+		this.rrm = $("<table>").addClass("berger-table");
+		if (caption) $("<caption>").text(caption).appendTo(e);
+		
+		const tr = $("<tr>").appendTo(this.rrm);
+		$("<th>").text("#").appendTo(tr);
+		for (let mid in this.rm[1])
+			$("<th>").text(parseInt(mid) + 1).appendTo(tr);
+		
+		for (let rid in this.rm)
+		{
+			const tr = $("<tr>").appendTo(this.rrm);
+			$("<td>").text(rid).appendTo(tr);
+			for (let m of this.rm[rid])
+				$("<td>")
+					.addClass(m[0] < m[1] ? "ordered" : "unordered")
+					.text(`${m[0]}-${m[1]}`)
+					.appendTo(tr);
+			tr.appendTo(this.rrm);
+		}
+	}
+}

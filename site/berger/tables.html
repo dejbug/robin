@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="icon" type="image/svg" href="../crosshatch.svg">
+	<title>berger</title>
+	<link href="../global.css" rel="stylesheet">
+<style>
+
+.row { display: flex; flex-flow: row nowrap; gap: 1em; }
+.column { display: flex; flex-flow: column nowrap; gap: 1em; }
+.padded { padding: 1em 0 0 1em; }
+
+svg { border: thin solid black; }
+
+.berger-table .ordered { color: black; }
+.berger-table .unordered { color: blue; }
+
+.berger-colors-table .white { background-color: #ffe; }
+.berger-colors-table .black { background-color: #ddf; }
+
+#info { text-align: right; color: lightgrey; }
+#info .error { color: crimson; }
+
+</style>
+</head>
+<body>
+<div id="info"></div>
+<div class="padded row">
+	<div id="table-1"></div>
+	<div id="table-2"></div>
+	<div id="table-3"></div>
+	<div id="table-4"></div>
+</div>
+<div class="padded column">
+	<div id="illustration"></div>
+</div>
+<script src="../vendor/jquery-3.6.3.min.js"></script>
+<script type="module">
+
+import * as berger from "../berger.js";
+
+function main()
+{
+	const table = new berger.Table();
+	table.generate(6);
+	table.appendInfo("#info");
+	if (!table.ok()) return;
+	table.appendPR("#table-1");
+	table.appendPP("#table-2");
+	table.appendBT("#table-3");
+	table.appendMap("#illustration", 7);
+}
+
+main();
+
+</script>
+</body>
+</html>
