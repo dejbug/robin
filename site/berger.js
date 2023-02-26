@@ -674,6 +674,7 @@ function renderMap(table, cols = 1, r = 60, rnode = 10)
 	const div = document.createElement("div");
 	
 	const count = Object.keys(table).length;
+	if (count < cols) cols = count;
 	
 	const gap = rnode * 2;
 	const off = gap + r;
