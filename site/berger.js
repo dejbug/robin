@@ -712,6 +712,47 @@ function drawRRMapRound(table, rid, x = 0, y = 0, r = 1, rnode = 1, pc = null)
 	return html;
 }
 
+export function renderMapSvg(table, cols = 1, r = 60, rnode = 10, standalone = true)
+{
+	const count = Object.keys(table).length;
+	if (count < cols) cols = count;
+	
+	const gap = rnode * 2;
+	const off = gap + r;
+	const step = (gap + r) * 2;
+	const rows = Math.ceil(count / cols);
+	
+	const width = cols * step;
+	const height = rows * step;
+	
+	let html = "";
+	if (standalone) html += '<?xml version="1.0" encoding="utf-8"?>';
+	html += `<svg width="${width}" height="${height}"`;
+	if (standalone) html += ' version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"';
+	html += '>';
+	// html += `<rect x="0" y="0" width="${width-1}" height="${height-1}" fill="white" stroke="black"/>`;
+	
+	for (let rid in table)
+	{
+		const i = (rid - 1) % cols;
+		const j = Math.floor((rid - 1) / cols);
+		// console.log(rid, i, j);
+		html += drawRRMapRound(table, rid, off + step * i, off + step * j, r, rnode);
+	}
+	
+	html += '</svg>';
+	return html;
+}
+
+export function renderMapToImg(...rest)
+{
+	const map = renderMapSvg(...rest);
+	const data = encodeURIComponent(map);
+	const el = document.createElement("img");
+	el.src = `data:image/svg+xml,${data}`;
+	return el;
+}
+
 function renderMap(table, cols = 1, r = 60, rnode = 10)
 {
 	const div = document.createElement("div");
@@ -762,8 +803,6 @@ function createRandomlyGeneratedTable(pc = 8, attempts = 10)
 // 	renderBergerColorsTable1, renderBergerColorsTable2,
 //	renderBergerTable, colorSwitchingHandler.
 
-
-
 export class Table
 {
 	constructor() { this.reset(); }
@@ -771,14 +810,15 @@ export class Table
 	reset()
 	{
 		this.attempts = 0;
+		this.attempt = 0;
 		
 		this.rm = undefined;
 		this.pr = undefined;
 		this.ct = undefined;
 		
-		if (this.rpr) this.rm.remove();
-		if (this.rpp) this.pr.remove();
-		if (this.rrm) this.ct.remove();
+		if (this.rpr) this.rpr.remove();
+		if (this.rpp) this.rpp.remove();
+		if (this.rrm) this.rrm.remove();
 		
 		this.rpr = undefined;
 		this.rpp = undefined;
@@ -787,7 +827,7 @@ export class Table
 	
 	ok() { return this.pr != undefined; }
 	
-	generate(pc, attempts = 1000)
+	generate(pc, attempts = 1000, sparse = false)
 	{
 		this.reset();
 		
@@ -799,15 +839,38 @@ export class Table
 		this.rm = bergerTableFromRoundsTable(distributeRoundsColors(this.pr));
 		this.ct = colorsTableFromBergerTable(this.rm);
 		
-		this.renderPR();
-		this.renderPP();
+		this.render(sparse);
+		
+		return true;
+	}
+	
+	render(sparse = false)
+	{
+		this.rpr = undefined;
+		this.rpp = undefined;
+		this.rrm = undefined;
+		
+		this.renderPR(undefined, sparse);
+		this.renderPP(undefined, sparse);
 		this.renderRM();
 		
 		this.rpr.on("mousedown", e => this.colorSwitchingHandler(e));
 		this.rpp.on("mousedown", e => this.colorSwitchingHandler(e));
 		this.rrm.on("mousedown", e => this.colorSwitchingHandler(e));
-		
-		return true;
+	}
+	
+	append(id)
+	{
+		this.appendPR(id);
+		this.appendPP(id);
+		this.appendBT(id);
+	}
+	
+	remove()
+	{
+		if (this.rpr) this.rpr.remove();
+		if (this.rpp) this.rpp.remove();
+		if (this.rrm) this.rrm.remove();
 	}
 	
 	colorSwitchingHandler(e)
@@ -967,11 +1030,11 @@ export class Table
 		return { cell, val, wid: parseInt(wid), bid: parseInt(bid) };
 	}
 	
-	appendInfo(id)
+	getGenerationStatus()
 	{
-		const info = $("<span>").appendTo("#info");
-		if (this.pr) info.text(`Generated random PR-table in ${this.attempt} attempt(s).`);
-		else info.addClass("error").text(`Was unable to generate PR-table in ${this.attempts} attempt(s).`);
+		if (this.attempts <= 0) return [ undefined, "Nothing rendered yet." ];
+		if (this.pr) return [ true, `Generated random PR-table in ${this.attempt} attempt(s).` ];
+		return [ false, `Was unable to generate PR-table in ${this.attempts} attempt(s).`];
 	}
 	
 	appendPR(id) { return this.rpr ? this.rpr.appendTo(id) : undefined;	}

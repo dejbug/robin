@@ -7,12 +7,11 @@
 	<title>berger</title>
 	<link href="../global.css" rel="stylesheet">
 <style>
-
 .row { display: flex; flex-flow: row nowrap; gap: 1em; }
 .column { display: flex; flex-flow: column nowrap; gap: 1em; }
 .padded { padding: 1em 0 0 1em; }
 
-svg { border: thin solid black; }
+img { border: thin solid black; max-width: 800px; }
 
 .berger-table .ordered { color: black; }
 .berger-table .unordered { color: blue; }
@@ -23,38 +22,96 @@ svg { border: thin solid black; }
 #info { text-align: right; color: lightgrey; }
 #info .error { color: crimson; }
 
+#controls { visibility: hidden; }
+#past-illustrations-pane { visibility: hidden; }
 </style>
 </head>
 <body>
+<div id="controls" class="padded">
+	<button onclick="render(4)">4</a>
+	<button onclick="render(6)">6</a>
+	<button onclick="render(8)">8</a>
+	<button onclick="render(10)">10</a>
+	<button onclick="render(12)">12</a>
+	<button onclick="render(14)">14</a>
+	<button onclick="render(16)">16</a>
+	<button onclick="toggleOptionSparse(this)">dense</a>
+</div>
 <div id="info"></div>
-<div class="padded row">
-	<div id="table-1"></div>
-	<div id="table-2"></div>
-	<div id="table-3"></div>
-	<div id="table-4"></div>
+<div id="tables" class="padded row"></div>
+<div id="illustration" class="padded"></div>
+<div id="past-illustrations-pane" class="padded">
+	<h3>Past Illustrations</h3>
+	<div id="past-illustrations" class="column"></div>
 </div>
-<div class="padded column">
-	<div id="illustration"></div>
-</div>
-<script src="../vendor/jquery-3.6.3.min.js"></script>
-<script type="module">
+<script>
+let berger = null;
+let table = null;
+let lastpc = null;
+let sparse = false;
 
-import * as berger from "../berger.js";
+function toggleOptionSparse(e)
+{
+	sparse = !sparse;
+	e.innerText = sparse ? "sparse" : "dense";
+	rerender();
+}
+
+function removeAll()
+{
+	$("#info > *").remove();
+	$("#tables > *").remove();
+	
+	const illu = $("#illustration > *");
+	if (illu.length > 0)
+	{
+		$("#past-illustrations-pane").css("visibility", "visible");
+		$("#illustration > img").prependTo($("#past-illustrations"));
+		$("#illustration > *").remove();
+	}
+}
+
+function appendGenerationStatus()
+{
+	$("#info *").remove();
+	const info = $("<span>").appendTo("#info");
+	const [ ok, msg ] = table.getGenerationStatus();
+	info.text(msg);
+	if (!ok) info.addClass("error");
+}
+
+function rerender()
+{
+	table.render(sparse);
+	$("#tables > *").remove();
+	table.append("#tables");
+}
+
+function render(pc)
+{
+	lastpc = pc;
+	
+	table.generate(pc, 1000, sparse);
+	appendGenerationStatus();
+	if (!table.ok()) return;
+	
+	removeAll();
+	table.append("#tables");
+	$(berger.renderMapToImg(table.rm, 5, 100, 20)).appendTo("#illustration");
+}
 
 function main()
 {
-	const table = new berger.Table();
-	table.generate(6);
-	table.appendInfo("#info");
-	if (!table.ok()) return;
-	table.appendPR("#table-1");
-	table.appendPP("#table-2");
-	table.appendBT("#table-3");
-	table.appendMap("#illustration", 7);
+	table = new berger.Table();
+	render(6);
+	$("#controls").css("visibility", "visible");
 }
-
+</script>
+<script src="../vendor/jquery-3.6.3.min.js"></script>
+<script type="module">
+import * as bergerjs from "../berger.js";
+berger = bergerjs;
 main();
-
 </script>
 </body>
 </html>
