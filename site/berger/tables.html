@@ -17,8 +17,8 @@ svg { border: thin solid black; }
 .berger-table .ordered { color: black; }
 .berger-table .unordered { color: blue; }
 
-.berger-colors-table .white { background-color: #ffe; }
-.berger-colors-table .black { background-color: #ddf; }
+.berger-table .white { background-color: #ffe; }
+.berger-table .black { background-color: #ddf; }
 
 #info { text-align: right; color: lightgrey; }
 #info .error { color: crimson; }
@@ -44,7 +44,7 @@ import * as berger from "../berger.js";
 function main()
 {
 	const table = new berger.Table();
-	table.generate(10);
+	table.generate(6);
 	table.appendInfo("#info");
 	if (!table.ok()) return;
 	table.appendPR("#table-1");

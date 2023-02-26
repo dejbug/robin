@@ -2,6 +2,10 @@ import { choose, Stack } from "./tools.js";
 
 export function generateRoundsTable(playersCount)
 {
+	// TODO: When we figure out the prefab Berger tables'
+	//	colorization scheme then we will replace the LUT
+	//	with this here function and rename it to berger().
+	
 	if (playersCount < 2) return null;
 	playersCount = playersCount + (playersCount % 2);
 	const roundsCount = playersCount - 1;
@@ -31,6 +35,9 @@ export function generateRoundsTable(playersCount)
 
 export function checkRoundsTable(rt)
 {
+	// TODO: The boolean return value is pointless given the
+	//	presence/absence of the string. Refactor it.
+	
 	const rr = Object.keys(rt);
 	const playersCount = rr.length;
 	if (playersCount < 2) return [ false, "playersCount < 2" ];
@@ -61,6 +68,10 @@ export function checkRoundsTable(rt)
 
 export function generateRandomRoundsTable(playersCount)
 {
+	// TODO: On second thought randomization over PR tables
+	//	doesn't look as straight-forward as it does over PP tables.
+	//	We only need look left and upwards in PP.
+	
 	if (playersCount < 2) return null;
 	playersCount = playersCount + (playersCount % 2);
 	const roundsCount = playersCount - 1;
@@ -457,6 +468,38 @@ export function calcTableCount(playersCount)
 	//	I'm underestimating the constraints. ( Think sudoku. )
 	//	This approach is rushed and rather naive.
 	
+	// Ok. So let's be looking at PP-tables for the calculations instead.
+	//	For a 1-player table there are zero rounds, hence the table
+	//	count is 0. 2 players have exactly one round, so 1. For any
+	//	odd number of players we wouldn't be able to fill the table,
+	//	reflecting the presence of byes. So we start thinking really
+	//	only upwards of 4 players. It is obvious that here we have
+	//	(n-1)!(n-2)! possibilities. At this point we will have to think
+	//	about how to count permutations with constraints. Clearly,
+	//	there are no constraints on the first permutation (i.e. the
+	//	1st player's opp-seq), so (n-1)!, but for the next cells going
+	//	down the diagonal (r:c 1:2, 2:3, ...) we'll need to look leftwards
+	//	and up for the exclusions. At 4:5 for example it is clear that
+	//	there are 6 cells to consider, which is more than n, proving
+	//	the existence of duplicate exclusions. Generally, for each
+	//	cell r:c we see that there are ((r-1)*2 + c-(r+1)) exclusions
+	//	max (i.e. with counting the duplicates). The presence of
+	//	dup-exs complicates the matter. If we could find a way to
+	//	count the duplicates, only then would we be able to find the
+	//	accurate table count. So maybe we need a different approach.
+	//	Looking at the PP table again we see that for row 1 we get
+	//	to choose one row out of the max possible permutation list.
+	//	1,2,3,4,5 for instance. Choosing this sequence predetermines
+	//	the starting element for the second row, in this case: 1. All
+	//	we need to do now is to count how many selections we have
+	//	with 1 in first position and with none of the remaining elements
+	//	in their original positions. A rotation comes to mind. Alas, the
+	//	concept of an element's "original position" evaporates for the
+	//	lower rows, which would have 2 or more such originals to reckon
+	//	with. So rotations won't do in the general case and we need
+	//	to come up with some more clever way of swapping.
+	
+	
 	if (playersCount < 2) return 0;
 	if (playersCount == 2) return 1;
 	
@@ -715,13 +758,15 @@ function createRandomlyGeneratedTable(pc = 8, attempts = 10)
 }
 
 // FIXME: class Table is a patchwork of the above functions. We need to redesign it.
+// TODO: Replace these obsoleted functions:
+// 	renderBergerColorsTable1, renderBergerColorsTable2,
+//	renderBergerTable, colorSwitchingHandler.
+
+
 
 export class Table
 {
-	constructor()
-	{
-		this.reset();
-	}
+	constructor() { this.reset(); }
 	
 	reset()
 	{
@@ -740,10 +785,7 @@ export class Table
 		this.rrm = undefined;
 	}
 	
-	ok()
-	{
-		return this.pr != undefined;
-	}
+	ok() { return this.pr != undefined; }
 	
 	generate(pc, attempts = 1000)
 	{
@@ -757,50 +799,35 @@ export class Table
 		this.rm = bergerTableFromRoundsTable(distributeRoundsColors(this.pr));
 		this.ct = colorsTableFromBergerTable(this.rm);
 		
-		// this.rpr = renderBergerColorsTable1(this.rm);
-		// this.rpp = renderBergerColorsTable2(this.rm);
-		// this.rrm = renderBergerTable(this.rm);
 		this.renderPR();
 		this.renderPP();
 		this.renderRM();
 		
-		// colorSwitchingHandler(this.rpr);
-		
-		this.rpr.on("mousedown", e => {
-			const row = e.target.parentNode.rowIndex;
-			const col = e.target.cellIndex;
-			const info = this.infoFromPR(row, col);
-			
-			this.toggleColorPR(info.pid, info.rid);
-			this.toggleColorPP(info.pid, info.oid);
-			this.toggleColorRM(info.rid, info.mid + 1);
-		});
-		
-		this.rpp.on("mousedown", e => {
-			const row = e.target.parentNode.rowIndex;
-			const col = e.target.cellIndex;
-			const info = this.infoFromPP(row, col);
-			
-			this.toggleColorPR(info.pid, info.rid);
-			this.toggleColorPP(info.pid, info.oid);
-			this.toggleColorRM(info.rid, info.mid + 1);
-		});
-		
-		this.rrm.on("mousedown", e => {
-			const row = e.target.parentNode.rowIndex;
-			const col = e.target.cellIndex;
-			const info = this.infoFromRM(row, col);
-			
-			this.toggleColorPR(info.pid, info.rid);
-			this.toggleColorPP(info.pid, info.oid);
-			this.toggleColorRM(info.rid, info.mid + 1);
-		});
+		this.rpr.on("mousedown", e => this.colorSwitchingHandler(e));
+		this.rpp.on("mousedown", e => this.colorSwitchingHandler(e));
+		this.rrm.on("mousedown", e => this.colorSwitchingHandler(e));
 		
 		return true;
 	}
 	
+	colorSwitchingHandler(e)
+	{
+		const row = e.target.parentNode.rowIndex;
+		const col = e.target.cellIndex;
+		const tt = this.tableTypeFromCell(e.target);
+		this.toggleColorTT(row, col, tt);
+	}
+	
+	tableTypeFromCell(td)
+	{
+		const table = td.parentNode.parentNode;
+		const a = table.attributes["berger-table-type"];
+		if (a) return parseInt(a.value);
+	}
+	
 	infoFromPR(row, col)
 	{
+		if (row < 1 || col < 1) return undefined;
 		const pid = row;
 		const rid = col;
 		const oid = this.pr[pid][rid];
@@ -813,6 +840,7 @@ export class Table
 	
 	infoFromPP(row, col)
 	{
+		if (row < 1 || col < 1 || row == col) return undefined;
 		const pid = row;
 		const oid = col;
 		const rid = this.pr[pid].findIndex(val => val == oid);
@@ -825,83 +853,118 @@ export class Table
 	
 	infoFromRM(row, col)
 	{
+		if (row < 1 || col < 1) return undefined;
 		const rid = row;
 		const mid = col - 1;
 		const [ pid, oid ] = this.rm[rid][mid];
 		return { pid, rid, oid, mid };
 	}
 	
-	toggleColor(pid, rid)
+	toggleColor(info)
 	{
+		if (!info) return;
+		
+		this.toggleRMColor(info.rid, info.mid);
+		const [ wid, bid ] = this.rm[info.rid][info.mid];
+		this.setCTColor(info.rid, wid, bid);
+		
+		this.updateCellPR(info.pid, info.rid);
+		this.updateCellPP(info.pid, info.oid);
+		this.updateCellRM(info.rid, info.mid);
+	}
+	
+	toggleColorTT(row, col, tt)
+	{
+		if (tt == 1) this.toggleColorPR(row, col);
+		else if (tt == 2) this.toggleColorPP(row, col);
+		else if (tt == 3) this.toggleColorRM(row, col);
+	}
+	
+	toggleColorPR(row, col) { this.toggleColor(this.infoFromPR(row, col)); }
+	
+	toggleColorPP(row, col) { this.toggleColor(this.infoFromPP(row, col)); }
+	
+	toggleColorRM(row, col) { this.toggleColor(this.infoFromRM(row, col)); }
+	
+	toggleRMColor(rid, mid)
+	{
+		const m = this.rm[rid][mid];
+		[ m[1], m[0] ] = [ m[0], m[1] ];
+		this.rm[rid][mid] = m;
+	}
+	
+	setCTColor(rid, wid, bid)
+	{
+		const i = this.ct[rid].findIndex(val => val == bid);
+		if (i >= 0) delete this.ct[rid][i];
+		const j = this.ct[rid].findIndex(val => val == wid);
+		if (j < 0) this.ct[rid].push(wid);
+	}
+	
+	updateCellPR(pid, rid)
+	{
+		const a = this.getCellPR(pid, rid);
 		const oid = this.pr[pid][rid];
-		if (this.ct[rid].includes(pid))
-		{
-			this.ct[rid].remove(pid);
-			this.ct[rid].push(oid);
-		}
-		else
-		{
-			this.ct[rid].remove(oid);
-			this.ct[rid].push(pid);
-		}
+		const b = this.getCellPR(oid, rid);
+		const white = this.ct[rid].includes(pid)
+		a.classList.remove("white");
+		a.classList.remove("black");
+		b.classList.remove("white");
+		b.classList.remove("black");
+		a.classList.add(white ? "white" : "black");
+		b.classList.add(white ? "black" : "white");
+		return true;
+	}
+	
+	updateCellPP(pid, oid)
+	{
+		const rid = this.pr[pid].findIndex(val => val == oid);
+		const white = this.ct[rid].includes(pid)
+		const a = this.getCellPP(pid, oid);
+		const b = this.getCellPP(oid, pid);
+		a.classList.remove("white");
+		a.classList.remove("black");
+		b.classList.remove("white");
+		b.classList.remove("black");
+		a.classList.add(white ? "white" : "black");
+		b.classList.add(white ? "black" : "white");
+	}
+	
+	updateCellRM(rid, mid)
+	{
+		const [ w, b ] = this.rm[rid][mid];
+		const c = this.getCellRM(rid, mid  + 1);
+		c.innerText = `${w}-${b}`;
+		c.classList.remove("ordered");
+		c.classList.remove("unordered");
+		c.classList.add(w < b ? "ordered" : "unordered");
 	}
 	
 	getCell(tab, row, col)
 	{
-		return tab.find("tr")[row].querySelectorAll("td")[col];
+		const tr = tab.find("tr")[row];
+		if (!tr) return undefined;
+		return tr.querySelectorAll("td")[col];
 	}
 	
-	getCellPR(pid, rid)
-	{
-		return this.getCell(this.rpr, pid, rid);
-	}
+	getCellPR(pid, rid) { return this.getCell(this.rpr, pid, rid); }
 	
-	getCellPP(pid, oid)
-	{
-		return this.getCell(this.rpp, pid, oid);
-	}
+	getCellPP(pid, oid) { return this.getCell(this.rpp, pid, oid); }
 	
-	getCellRM(rid, mid)
-	{
-		return this.getCell(this.rrm, rid, mid);
-	}
+	getCellRM(rid, mid) { return this.getCell(this.rrm, rid, mid); }
 	
-	toggleColorPR(pid, rid)
+	getCellValueRM(row, col)
 	{
-		const a = this.getCellPR(pid, rid);
-		const oid = parseInt(a.innerText);
-		const b = this.getCellPR(oid, rid);
-		
-		const white = a.classList.contains("white");
-		a.classList.remove(white ? "white" : "black");
-		b.classList.remove(white ? "black" : "white");
-		a.classList.add(white ? "black" : "white");
-		b.classList.add(white ? "white" : "black");
-	}
-	
-	toggleColorPP(pid, oid)
-	{
-		const a = this.getCellPP(pid, oid);
-		const b = this.getCellPP(oid, pid);
-		// const rid = parseInt(a.innerText);
-		
-		const white = a.classList.contains("white");
-		a.classList.remove(white ? "white" : "black");
-		b.classList.remove(white ? "black" : "white");
-		a.classList.add(white ? "black" : "white");
-		b.classList.add(white ? "white" : "black");
-	}
-	
-	toggleColorRM(rid, mid)
-	{
-		const c = this.getCellRM(rid, mid);
-		const g = c.innerText.match(/(\d+)-(\d+)/);
-		// console.log(c.innerText, g);
-		const [ _, w, b ] = g;
-		c.classList.remove("ordered");
-		c.classList.remove("unordered");
-		c.innerText = `${b}-${w}`;
-		c.classList.add(b < w ? "ordered" : "unordered");
+		const info = this.infoFromRM(row, col);
+		if (!info) return undefined;
+		const cell = this.getCellRM(info.rid, info.mid + 1);
+		if (!cell) return undefined;
+		const val = cell.innerText;
+		if (!val) return { cell, val: undefined, wid: undefined, bid: undefined };
+		const groups = val.match(/(\d+)-(\d+)/);
+		if (!groups) return { cell, val, wid: undefined, bid: undefined };
+		const [ _, wid, bid ] = groups;
+		return { cell, val, wid: parseInt(wid), bid: parseInt(bid) };
 	}
 	
 	appendInfo(id)
@@ -911,29 +974,20 @@ export class Table
 		else info.addClass("error").text(`Was unable to generate PR-table in ${this.attempts} attempt(s).`);
 	}
 	
-	appendPR(id)
-	{
-		return this.rpr ? this.rpr.appendTo(id) : undefined;
-	}
+	appendPR(id) { return this.rpr ? this.rpr.appendTo(id) : undefined;	}
 	
-	appendPP(id)
-	{
-		return this.rpp ? this.rpp.appendTo(id) : undefined;
-	}
+	appendPP(id) { return this.rpp ? this.rpp.appendTo(id) : undefined; }
 	
-	appendBT(id)
-	{
-		return this.rrm ? this.rrm.appendTo(id) : undefined;
-	}
+	appendBT(id) { return this.rrm ? this.rrm.appendTo(id) : undefined; }
 	
 	appendMap(id, cols = 1, r = 60, rnode = 10)
 	{
 		return $(renderMap(this.rm, cols, r, rnode)).appendTo(id);
 	}
 	
-	renderPR(caption = undefined)
+	renderPR(caption = undefined, sparse = false)
 	{
-		this.rpr = $("<table>").addClass("berger-colors-table").attr("berger-colors-table-type", 1);
+		this.rpr = $("<table>").addClass("berger-table").attr("berger-table-type", 1);
 		if (caption) $("<caption>").text(caption).appendTo(this.rpr);
 		
 		const tr = $("<tr>");
@@ -948,22 +1002,29 @@ export class Table
 		
 		for (let pid in this.pr)
 		{
+			pid = parseInt(pid);
 			const tr = $("<tr>");
 			$("<td>").addClass("pid").text(pid).appendTo(tr);
 			for (let rid in this.pr[pid])
-				$("<td>").text(this.pr[pid][rid])
-				.addClass("opp")
-				.addClass(this.ct[rid].includes(parseInt(pid)) ? "white" : "black")
-				.appendTo(tr);
+			{
+				const oid = this.pr[pid][rid];
+				const white = this.ct[rid].includes(pid);
+				const td = $("<td>")
+					.addClass("opp")
+					.addClass(white ? "white" : "black");
+				if (sparse && oid < pid) $("<td>").text("");
+				else td.text(oid);
+				td.appendTo(tr);
+			}
 			tr.appendTo(this.rpr);
 		}
 	}
 	
-	renderPP(caption = null)
+	renderPP(caption = undefined, sparse = false)
 	{
 		const playerCount = Object.keys(this.rm).length + 1;
 		
-		this.rpp = $("<table>").addClass("berger-colors-table").attr("berger-colors-table-type", 2);
+		this.rpp = $("<table>").addClass("berger-table").attr("berger-table-type", 2);
 		if (caption) $("<caption>").text(caption).appendTo(e);
 		
 		const tr = $("<tr>");
@@ -995,14 +1056,14 @@ export class Table
 				const b = rows[bid].children[wid];
 				w.classList.add("white");
 				b.classList.add("black");
-				w.innerText = rid;
-				b.innerText = rid;
+				if (!sparse || wid < bid) w.innerText = rid;
+				if (!sparse || bid < wid) b.innerText = rid;
 			}
 	}
 	
-	renderRM(caption = null)
+	renderRM(caption = undefined)
 	{
-		this.rrm = $("<table>").addClass("berger-table");
+		this.rrm = $("<table>").addClass("berger-table").attr("berger-table-type", 3);
 		if (caption) $("<caption>").text(caption).appendTo(e);
 		
 		const tr = $("<tr>").appendTo(this.rrm);
