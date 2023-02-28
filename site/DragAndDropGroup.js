@@ -177,27 +177,27 @@ export class DragAndDropGroup
 		this.cursor.setAttribute("r", "18");
 		this.cursor.setAttribute("cx", "0");
 		this.cursor.setAttribute("cy", "0");
-		this.cursor.setAttribute("fill", "white");
-		this.cursor.setAttribute("stroke", "grey");
-		this.cursor.style.strokeWidth = "2px";
 		this.cursor.style.pointerEvents = "none";
+		this.cursor.classList.add("cursor");
 		
 		this.hook = document.createElementNS(this.svg.namespaceURI, "circle");
 		this.hook.setAttribute("r", "3");
 		this.hook.setAttribute("cx", "0");
 		this.hook.setAttribute("cy", "0");
-		this.hook.setAttribute("fill", "grey");
-		this.hook.setAttribute("stroke", "none");
 		this.hook.style.pointerEvents = "none";
+		this.hook.classList.add("hook");
 		
 		this.link = document.createElementNS(this.svg.namespaceURI, "line");
 		this.link.setAttribute("x1", "0");
 		this.link.setAttribute("y1", "0");
 		this.link.setAttribute("x2", "0");
 		this.link.setAttribute("y2", "0");
-		this.link.setAttribute("stroke", "grey");
-		this.link.style.strokeWidth = "2px";
 		this.link.style.pointerEvents = "none";
+		this.link.classList.add("link");
+		// TODO: The marker's fill doesn't adapt to the marked element's stroke.
+		//	SVG2 provides for something like { fill: context-stroke; } but it
+		//	doesn't seem to work.
+		// this.link.classList.add("arrow");
 		
 		// TODO: Use Function.prototype.bind instead ?
 		

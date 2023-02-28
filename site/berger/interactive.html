@@ -11,16 +11,34 @@ svg { border: thin solid grey; }
 </head>
 <body>
 <svg id="output" width="600" height="400">
+<style type="text/css">
+circle { fill: white; stroke: black; }
+line { fill: none; stroke: black; }
+marker { stroke: none; overflow: hidden; }
+.arrow { marker-end: url(#end); }
+.cursor { fill: white; stroke: grey; stroke-width: 2; }
+.hook { fill: white; stroke: grey; }
+.link { fill: none; stroke: grey; stroke-width: 2; }
+</style>
+<marker id="end" orient="auto" markerUnits="userSpaceOnUse"
+	markerWidth="10" markerHeight="10" refX="30" refY="5">
+	<polygon points="0,10 10,5 0,0" />
+</marker>
 <g>
-<line data-wid="1" data-bid="3" x1="100" y1="100" x2="100" y2="200" stroke="black"/>
+	<line class="arrow" data-wid="1" data-bid="4" x1="100" y1="100" x2="100" y2="200"/>
+	<line class="arrow" data-wid="3" data-bid="2" x1="300" y1="150" x2="200" y2="100"/>
+	<line class="arrow" data-wid="5" data-bid="6" x1="200" y1="200" x2="300" y2="200"/>
 </g>
 <g>
-<circle data-pid="1" r="20" cx="100" cy="100" fill="white" stroke="black"/>
-<circle data-pid="2" r="20" cx="200" cy="100" fill="white" stroke="black"/>
+	<circle data-pid="1" r="20" cx="100" cy="100"/>
+	<circle data-pid="2" r="20" cx="200" cy="100"/>
+	<circle data-pid="3" r="20" cx="300" cy="150"/>
 </g>
 <g>
-<circle data-pid="3" r="20" cx="100" cy="200" fill="white" stroke="black"/>
-<circle r="20" cx="200" cy="200" fill="white" stroke="black"/>
+	<circle data-pid="4" r="20" cx="100" cy="200"/>
+	<circle data-pid="5" r="20" cx="200" cy="200"/>
+	<circle data-pid="6" r="20" cx="300" cy="200"/>
+	<circle data-pid="7" r="20" cx="150" cy="150"/>
 </g>
 </svg>
 <script type="module">
