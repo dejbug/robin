@@ -239,16 +239,19 @@ export class DragAndDropGroup
 			traceMarker: undefined
 		};
 		
-		this.dragged = undefined;
 		this.hook = undefined;
-		
-		this.hoveredRadius = undefined;
-		this.hit = undefined;
+		this.dragged = undefined;
 		this.hovered = undefined;
+		this.hoveredRadius = undefined;
+		
+		this.hit = undefined;
+		this.fac = undefined;
 		
 		this.onMouseMoveListener = undefined;
 		this.onMouseDownListener = undefined;
 		this.onMouseUpListener = undefined;
+		
+		this.translateCoordinates = (x, y) => [x, y];
 		
 		if (svg) this.attach(svg);
 	}
@@ -260,15 +263,14 @@ export class DragAndDropGroup
 
 	onDragStart(e)
 	{
-		// console.log(e);
-		
 		this.dragged = new Circle(e.target);
 		this.dragged.hide();
 		
-		this.hit = this.svg.getBoundingClientRect();
+		this.initCoordinateTranslator();
 		
-		this.temp.cursor.x = e.x - this.hit.x;
-		this.temp.cursor.y = e.y - this.hit.y;
+		const [x, y] = this.translateCoordinates(e.x, e.y);
+		this.temp.cursor.x = x;
+		this.temp.cursor.y = y;
 		this.temp.cursor.show();
 		
 		if (this.dragged.other)
@@ -303,17 +305,17 @@ export class DragAndDropGroup
 		if (this.hook == this.temp.hook)
 			this.hook.hide();
 		
-		this.dragged = undefined;
-		this.hit = undefined;
 		this.hook = undefined;
+		this.dragged = undefined;
 		
 		if (target) this.onDrop(source, target);
 	}
 
 	onDragMove(e)
 	{
-		this.temp.cursor.x = e.x - this.hit.x;
-		this.temp.cursor.y = e.y - this.hit.y;
+		const [ x, y ] = this.translateCoordinates(e.x, e.y);
+		this.temp.cursor.x = x;
+		this.temp.cursor.y = y;
 		if (this.hook)
 		{
 			this.temp.link.x1 = this.hook.x;
@@ -383,6 +385,8 @@ export class DragAndDropGroup
 	attach(svg)
 	{
 		this.svg = svg;
+		
+		this.initCoordinateTranslator();
 		
 		this.createMarkers();
 		
@@ -495,5 +499,33 @@ export class DragAndDropGroup
 		if (this.dragged == undefined) return false;
 		if (this.dragged.parent != target.parentNode) return false;
 		return target.nodeName == "circle";
+	}
+
+	initCoordinateTranslator()
+	{
+		// FIXME: This seems to work for svg that have either
+		//	a width/height or a viewport but not both. I don't
+		//	like it though; it feels hacky. I will keep looking
+		//	for a SVG-native approach to coordinate transformation.
+		//	Maybe there is something like a view-matrix in the
+		//	svg object's prototype?
+		
+		this.hit = this.svg.getBoundingClientRect();
+		if (this.svg.viewBox.baseVal)
+		{
+			const width = this.svg.width.baseVal.value;
+			const height = this.svg.height.baseVal.value;
+			this.fac = { x: width / this.hit.width, y: height / this.hit.height };
+			this.translateCoordinates = (x, y) => {
+				return [ (x - this.hit.x) * this.fac.x, (y - this.hit.y) * this.fac.y ];
+			};
+		}
+		else
+		{
+			this.fac = undefined;
+			this.translateCoordinates = (x, y) => {
+				return [ x - this.hit.x, y - this.hit.y ];
+			};
+		}
 	}
 }

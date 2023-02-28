@@ -771,9 +771,9 @@ export function renderMap(table, cols = 1, r = 60, rnode = 10)
 	const width = cols * step;
 	const height = rows * step;
 	
-	svg.setAttribute("width", width);
-	svg.setAttribute("height", height);
-	// svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+	// svg.setAttribute("width", width);
+	// svg.setAttribute("height", height);
+	svg.setAttribute("viewBox", `0,0 ${width},${height}`);
 	
 	let html = "<style>"
 	html += "text { pointer-events: none; } ";
