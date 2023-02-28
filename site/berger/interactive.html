@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="icon" type="image/svg" href="../crosshatch.svg">
+	<title>berger</title>
+<style>
+svg { border: thin solid grey; }
+</style>
+</head>
+<body>
+<svg id="output" width="600" height="400">
+<g>
+<circle r="20" cx="100" cy="100" fill="white" stroke="black"/>
+<circle r="20" cx="200" cy="100" fill="white" stroke="black"/>
+</g>
+<g>
+<circle r="20" cx="100" cy="200" fill="white" stroke="black"/>
+<circle r="20" cx="200" cy="200" fill="white" stroke="black"/>
+</g>
+</svg>
+<script type="module">
+import { DragAndDropGroup } from "../DragAndDropGroup.js";
+const dnd = new DragAndDropGroup(output);
+</script>
+</body>
+</html>
