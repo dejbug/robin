@@ -13,12 +13,12 @@ svg { border: thin solid grey; }
 <svg id="output" width="600" height="400">
 <style type="text/css">
 circle { fill: white; stroke: black; }
-line { fill: none; stroke: black; }
+line { fill: none; stroke: black; marker-end: url(#end); }
 marker { stroke: none; overflow: hidden; }
-.arrow { marker-end: url(#end); }
+
 .cursor { fill: white; stroke: grey; stroke-width: 2; }
-.hook { fill: white; stroke: grey; }
 .link { fill: none; stroke: grey; stroke-width: 2; }
+.hook { fill: white; stroke: grey; }
 .ghost { fill: white; stroke: lightgrey; stroke-width: 2; }
 .trace { fill: none; stroke: lightgrey; stroke-width: 1; }
 </style>
@@ -27,9 +27,9 @@ marker { stroke: none; overflow: hidden; }
 	<polygon points="0,10 10,5 0,0" />
 </marker>
 <g>
-	<line class="arrow" data-wid="1" data-bid="4" x1="100" y1="100" x2="100" y2="200"/>
-	<line class="arrow" data-wid="3" data-bid="2" x1="300" y1="150" x2="200" y2="100"/>
-	<line class="arrow" data-wid="5" data-bid="6" x1="200" y1="200" x2="300" y2="200"/>
+	<line data-wid="1" data-bid="4" x1="100" y1="100" x2="100" y2="200"/>
+	<line data-wid="3" data-bid="2" x1="300" y1="150" x2="200" y2="100"/>
+	<line data-wid="5" data-bid="6" x1="200" y1="200" x2="300" y2="200"/>
 </g>
 <g>
 	<circle data-pid="1" r="20" cx="100" cy="100"/>

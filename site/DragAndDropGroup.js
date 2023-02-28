@@ -1,3 +1,14 @@
+// TODO: When we drag a solo, unconnected circle (i.e. when
+//	the hook element is triggered) the arrowhead is pushed
+//	outside the circle. This is ugly.
+
+// TODO: In the absence of svg styles, initialize with sensible
+//	defaults (based, perhaps, on the general page style?).
+//	In the presence of some styles, derive the missing ones
+//	from what is given. We need a way to get the rendered/
+//	computed styles and not just a huge array of mostly
+//	nulls. How does jQuery do it?
+
 // TODO: Make the link overlap the hover. Best way would be to
 //	create clones of the hover and the hook, make the originals
 //	invisible, then layer the temporary objects like so: cursor over
@@ -11,10 +22,12 @@ export class DragAndDropGroup
 		this.svg = undefined;
 		
 		this.cursor = undefined;
-		this.hook = undefined;
 		this.link = undefined;
+		this.linkMarker = undefined;
+		this.hook = undefined;
 		this.ghost = undefined;
 		this.trace = undefined;
+		this.traceMarker = undefined;
 		
 		this.dragged = undefined;
 		this.draggedParent = undefined;
@@ -177,9 +190,27 @@ export class DragAndDropGroup
 		if (this.hovered) this.onHoverLeave(e);
 	}
 	
+	createMarkers()
+	{
+		const marker = this.svg.getElementById("end");
+		if (!marker) return;
+		
+		this.linkMarker = marker.cloneNode(true);
+		this.linkMarker.id = "end-link";
+		this.linkMarker.classList.add("hook");
+		marker.parentNode.append(this.linkMarker);
+		
+		this.traceMarker = marker.cloneNode(true);
+		this.traceMarker.id = "end-trace";
+		this.traceMarker.classList.add("ghost");
+		marker.parentNode.append(this.traceMarker);
+	}
+	
 	attach(svg)
 	{
 		this.svg = svg;
+		
+		this.createMarkers();
 		
 		this.cursor = document.createElementNS(this.svg.namespaceURI, "circle");
 		this.cursor.setAttribute("r", "18");
@@ -202,6 +233,7 @@ export class DragAndDropGroup
 		this.link.setAttribute("y2", "0");
 		this.link.style.pointerEvents = "none";
 		this.link.classList.add("link");
+		this.link.style.markerEnd = "url(#end-link)";
 		// TODO: The marker's fill doesn't adapt to the marked element's stroke.
 		//	SVG2 provides for something like { fill: context-stroke; } but it
 		//	doesn't seem to work.
@@ -221,6 +253,7 @@ export class DragAndDropGroup
 		this.trace.setAttribute("y2", "0");
 		this.trace.style.pointerEvents = "none";
 		this.trace.classList.add("trace");
+		this.trace.style.markerEnd = "url(#end-trace)";
 		// this.trace.classList.add("arrow");
 		
 		// TODO: Use Function.prototype.bind instead ?
