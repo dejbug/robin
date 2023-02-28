@@ -11,8 +11,10 @@ export class DragAndDropGroup
 		this.svg = undefined;
 		
 		this.cursor = undefined;
-		this.link = undefined;
 		this.hook = undefined;
+		this.link = undefined;
+		this.ghost = undefined;
+		this.trace = undefined;
 		
 		this.dragged = undefined;
 		this.draggedParent = undefined;
@@ -20,6 +22,7 @@ export class DragAndDropGroup
 		this.draggedLineParent = undefined;
 		this.draggedLineHook = undefined;
 		this.hoveredRadius = undefined;
+		this.hoveredLine = undefined;
 		this.hit = undefined;
 		this.hovered = undefined;
 		
@@ -39,7 +42,7 @@ export class DragAndDropGroup
 	
 	onDrop(source, target)
 	{
-		console.log("dropped", { source, target });
+		// console.log("dropped", { source, target });
 	}
 	
 	onDragStart(e)
@@ -93,6 +96,9 @@ export class DragAndDropGroup
 	
 	onDragStop(e)
 	{
+		// TODO: Move all the important/implicit x=undefined to onMouseUp?
+		//	Think about subclasses and minimizing their assumptions more.
+		
 		const source = this.dragged;
 		const target = this.hovered;
 		
@@ -131,6 +137,7 @@ export class DragAndDropGroup
 		this.hovered = e.target;
 		this.hoveredRadius = this.hovered.getAttribute("r");
 		this.hovered.setAttribute("r", "30");
+		this.showGhost();
 	}
 	
 	onHoverLeave(e)
@@ -138,6 +145,7 @@ export class DragAndDropGroup
 		this.hovered.setAttribute("r", this.hoveredRadius);
 		this.hoveredRadius = undefined;
 		this.hovered = undefined;
+		this.hideGhost();
 	}
 	
 	onMouseMove(e)
@@ -199,6 +207,22 @@ export class DragAndDropGroup
 		//	doesn't seem to work.
 		// this.link.classList.add("arrow");
 		
+		this.ghost = document.createElementNS(this.svg.namespaceURI, "circle");
+		this.ghost.setAttribute("r", "18");
+		this.ghost.setAttribute("cx", "0");
+		this.ghost.setAttribute("cy", "0");
+		this.ghost.style.pointerEvents = "none";
+		this.ghost.classList.add("ghost");
+		
+		this.trace = document.createElementNS(this.svg.namespaceURI, "line");
+		this.trace.setAttribute("x1", "0");
+		this.trace.setAttribute("y1", "0");
+		this.trace.setAttribute("x2", "0");
+		this.trace.setAttribute("y2", "0");
+		this.trace.style.pointerEvents = "none";
+		this.trace.classList.add("trace");
+		// this.trace.classList.add("arrow");
+		
 		// TODO: Use Function.prototype.bind instead ?
 		
 		this.onMouseMoveListener = e => { this.onMouseMove(e) };
@@ -225,5 +249,76 @@ export class DragAndDropGroup
 		this.onMouseUpListener = undefined;
 		
 		this.svg = undefined;
+	}
+	
+	showGhost()
+	{
+		if (!this.hovered) return;
+		
+		this.hoveredLine = this.findLineForCircle(this.hovered);
+		if (!this.hoveredLine) return;
+		
+		this.hoveredLineParent = this.hoveredLine.parentNode;
+		this.hoveredLine.parentNode.removeChild(this.hoveredLine);
+		
+		this.ghost.setAttribute("cx", this.dragged.getAttribute("cx"));
+		this.ghost.setAttribute("cy", this.dragged.getAttribute("cy"));
+		this.svg.append(this.ghost);
+		
+		// TODO: It would be nice for the trace to have an arrow shown,
+		//	but we can not use the regular marker because it doesn't
+		//	adapt its colors to the element it marks. Maybe we should
+		//	find the marker in the svg (or create one if it doesn't exist?)
+		//	then clone it (for both links and traces) and simply add it?
+		
+		const { white, black } = this.findCirclesForLine(this.hoveredLine);
+		
+		if (this.hovered === white)
+		{
+			this.trace.setAttribute("x1", this.ghost.getAttribute("cx"));
+			this.trace.setAttribute("y1", this.ghost.getAttribute("cy"));
+			this.trace.setAttribute("x2", black.getAttribute("cx"));
+			this.trace.setAttribute("y2", black.getAttribute("cy"));
+		}
+		else if (this.hovered === black)
+		{
+			this.trace.setAttribute("x1", white.getAttribute("cx"));
+			this.trace.setAttribute("y1", white.getAttribute("cy"));
+			this.trace.setAttribute("x2", this.ghost.getAttribute("cx"));
+			this.trace.setAttribute("y2", this.ghost.getAttribute("cy"));
+		}
+		this.svg.prepend(this.trace);
+	}
+	
+	hideGhost()
+	{
+		if (!this.hoveredLine) return;
+		// this.hoveredLine.parentNode.append(this.hoveredLine);
+		this.hoveredLineParent.append(this.hoveredLine);
+		this.hoveredLine = undefined;
+		this.svg.removeChild(this.ghost);
+		this.svg.removeChild(this.trace);
+	}
+	
+	findLineForCircle(circle)
+	{
+		const pid = circle.getAttribute("data-pid");
+		const lines = this.svg.querySelectorAll("line");
+		for (const line of lines)
+		{
+			const wid = line.getAttribute("data-wid");
+			const bid = line.getAttribute("data-bid");
+			if (wid == pid || bid == pid) return line;
+		}
+		return undefined;
+	}
+	
+	findCirclesForLine(line)
+	{
+		const wid = line.getAttribute("data-wid");
+		const bid = line.getAttribute("data-bid");
+		const white = this.svg.querySelector(`circle[data-pid="${wid}"`);
+		const black = this.svg.querySelector(`circle[data-pid="${bid}"`);
+		return { white, black };
 	}
 }
