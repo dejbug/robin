@@ -1,3 +1,13 @@
+// TODO: Show text in cursor.
+
+// TODO: Make this a little more general. In particular,
+//	change pid, wid, bid to something else: id/index,
+//	source/from/start, target/sink/to/end.
+
+// TODO: Make it robust when data- attributes are missing
+//	or aren't correctly set. Shouldn't matter because we
+//	generate the svg procedurally.
+
 // TODO: When we drag a solo, unconnected circle (i.e. when
 //	the hook element is triggered) the arrowhead is pushed
 //	outside the circle. This is ugly.
@@ -15,27 +25,224 @@
 //	hook over link over hover. But the easiest way might be to
 //	store the hover's fill and make it transparent.
 
+// TODO: Emulate a mouse capture by adding this listener
+//	from within (a successful) mousedown event, removing
+//	it from within mouseup after it is handled. Alternatively,
+//	use addEventListener's third "options" argument for that.
+
+class Element
+{
+	constructor(element, parent = undefined)
+	{
+		this.element = element;
+		if (parent) this.parent = parent;
+		else if (element) this.parent = element.parentNode;
+		this._shown = 0;
+	}
+
+	cadd(s) { this.element.classList.add(s); }
+
+	sset(k, s) { this.element.style[k] = s; }
+
+	get shown() { return this._shown > 0; }
+
+	get hidden() { return this._shown < 0; }
+
+	equals(other) { return other && other.element == this.element; }
+
+	hide()
+	{
+		console.assert(this._shown >= 0, "already hidden");
+		if (this._shown < 0) return false;
+		--this._shown;
+		this.parent.removeChild(this.element);
+		return true;
+	}
+
+	show(append = true)
+	{
+		// TODO: Calling show(false) looks like we are
+		//	hiding something!
+		
+		console.assert(this._shown <= 0, "already shown");
+		if (this._shown > 0) return false;
+		++this._shown;
+		if (append) this.parent.append(this.element);
+		else this.parent.prepend(this.element);
+		return true;
+	}
+}
+
+class Line extends Element
+{
+	constructor(element, ...rest)
+	{
+		if (!Line.isValid(element)) throw new Error("not a line");
+		super(element, ...rest);
+		this.wid = parseInt(element.getAttribute("data-wid"));
+		this.bid = parseInt(element.getAttribute("data-bid"));
+	}
+
+	get x1() { return parseInt(this.element.getAttribute("x1")); }
+
+	get y1() { return parseInt(this.element.getAttribute("y1")); }
+
+	get x2() { return parseInt(this.element.getAttribute("x2")); }
+
+	get y2() { return parseInt(this.element.getAttribute("y2")); }
+
+	set x1(n) { this.element.setAttribute("x1", n); }
+
+	set y1(n) { this.element.setAttribute("y1", n); }
+
+	set x2(n) { this.element.setAttribute("x2", n); }
+
+	set y2(n) { this.element.setAttribute("y2", n); }
+
+	show() { super.show(false); }
+
+	other(pid)
+	{
+		if (pid == this.wid) return this.bid;
+		if (pid == this.bid) return this.wid;
+		return undefined;
+	}
+
+	static create(svg)
+	{
+		return new Line(document.createElementNS(svg.namespaceURI, "line"), svg);
+	}
+
+	static isValid(element)
+	{
+		return element && element.nodeName == "line";
+	}
+
+	static find(parent, pid)
+	{
+		if (pid == undefined) return undefined;
+		const lines = parent.querySelectorAll("line");
+		for (const line of lines)
+		{
+			const wid = line.getAttribute("data-wid");
+			const bid = line.getAttribute("data-bid");
+			if (wid == pid || bid == pid) return new Line(line);
+		}
+		return undefined;
+	}
+}
+
+class Circle extends Element
+{
+	constructor(element, ...rest)
+	{
+		if (!Circle.isValid(element)) throw new Error("not a circle");
+		super(element, ...rest);
+		this.pid = Circle.getPid(element);
+		this.text = Circle.findText(this.parent, this.pid);
+		this.line = Line.find(this.parent, this.pid);
+		this.oid = this.line && this.line.other(this.pid);
+		this.white = this.line && this.line.wid == this.pid;
+		this._other = null;
+	}
+
+	get r() {return parseInt(this.element.getAttribute("r")); }
+
+	get x() { return parseInt(this.element.getAttribute("cx")); }
+
+	get y() { return parseInt(this.element.getAttribute("cy")); }
+
+	set r(n) { this.element.setAttribute("r", n); }
+
+	set x(n) { this.element.setAttribute("cx", n); }
+
+	set y(n) { this.element.setAttribute("cy", n); }
+
+	get other()
+	{
+		if (this._other === undefined) return undefined;
+		if (this._other === null)
+		{
+			if (this.oid == undefined) this._other = undefined;
+			else this._other = Circle.find(this.parent, this.oid);
+		}
+		return this._other;
+	}
+
+	hide()
+	{
+		super.hide();
+		if (this.text) this.parent.removeChild(this.text);
+		if (this.line) this.line.hide();
+	}
+
+	show()
+	{
+		if (this.line) this.line.show();
+		super.show();
+		if (this.text) this.parent.append(this.text);
+	}
+
+	static create(svg)
+	{
+		return new Circle(document.createElementNS(svg.namespaceURI, "circle"), svg);
+	}
+
+	static isValid(element) { return element && element.nodeName == "circle"; }
+
+	static getPid(element)
+	{
+		const pid = element.getAttribute("data-pid");
+		return pid && parseInt(pid);
+	}
+
+	static find(parent, pid)
+	{
+		if (pid == undefined) return undefined;
+		const circles = parent.querySelectorAll("circle");
+		for (const circle of circles)
+		{
+			const oid = Circle.getPid(circle);
+			if (oid == pid) return new Circle(circle);
+		}
+		return undefined;
+	}
+
+	static findText(parent, pid)
+	{
+		if (pid == undefined) return undefined;
+		
+		// TODO: This is rather presumptious. Perhaps add a
+		// data-for attribute to texts?
+		
+		const texts = parent.querySelectorAll("text");
+		for (const text of texts)
+			if (text.textContent == pid)
+				return text;
+		return undefined;
+	}
+}
+
 export class DragAndDropGroup
 {
 	constructor(svg = undefined)
 	{
 		this.svg = undefined;
 		
-		this.cursor = undefined;
-		this.link = undefined;
-		this.linkMarker = undefined;
-		this.hook = undefined;
-		this.ghost = undefined;
-		this.trace = undefined;
-		this.traceMarker = undefined;
+		this.temp = {
+			cursor: undefined,
+			hook: undefined,
+			ghost: undefined,
+			link: undefined,
+			trace: undefined,
+			linkMarker: undefined,
+			traceMarker: undefined
+		};
 		
 		this.dragged = undefined;
-		this.draggedParent = undefined;
-		this.draggedLine = undefined;
-		this.draggedLineParent = undefined;
-		this.draggedLineHook = undefined;
+		this.hook = undefined;
+		
 		this.hoveredRadius = undefined;
-		this.hoveredLine = undefined;
 		this.hit = undefined;
 		this.hovered = undefined;
 		
@@ -45,216 +252,164 @@ export class DragAndDropGroup
 		
 		if (svg) this.attach(svg);
 	}
-	
-	isValidTarget(target)
-	{
-		if (target.nodeName != "circle") return false;
-		if (this.draggedParent && this.draggedParent != target.parentNode) return false;
-		return true;
-	}
-	
+
 	onDrop(source, target)
 	{
 		// console.log("dropped", { source, target });
 	}
-	
+
 	onDragStart(e)
 	{
+		// console.log(e);
+		
+		this.dragged = new Circle(e.target);
+		this.dragged.hide();
+		
 		this.hit = this.svg.getBoundingClientRect();
-		this.dragged = e.target;
-		this.draggedParent = this.dragged.parentNode;
-		this.draggedParent.removeChild(this.dragged);
 		
-		this.cursor.setAttribute("cx", e.x - this.hit.x);
-		this.cursor.setAttribute("cy", e.y - this.hit.y);
-		this.svg.appendChild(this.cursor);
+		this.temp.cursor.x = e.x - this.hit.x;
+		this.temp.cursor.y = e.y - this.hit.y;
+		this.temp.cursor.show();
 		
-		const pid = this.dragged.getAttribute("data-pid");
-		const lines = this.svg.querySelectorAll("line");
-		for (const line of lines)
+		if (this.dragged.other)
+			this.hook = this.dragged.other;
+		else
 		{
-			const wid = line.getAttribute("data-wid");
-			const bid = line.getAttribute("data-bid");
-			if (wid != pid && bid != pid) continue;
-			this.draggedLine = line;
-			this.draggedLineParent = this.draggedLine.parentNode;
-			this.draggedLineParent.removeChild(this.draggedLine);
-			
-			this.draggedLineHook = undefined;
-			const circles = this.svg.querySelectorAll("circle");
-			for (const circle of circles)
-			{
-				const oid = circle.getAttribute("data-pid");
-				if (oid == pid || oid != wid && oid != bid) continue;
-				this.draggedLineHook = circle;
-				break;
-			}
-			break;
+			this.hook = this.temp.hook;
+			this.hook.x = this.dragged.x;
+			this.hook.y = this.dragged.y;
+			this.hook.show(false);
 		}
 		
-		if (!this.draggedLineHook)
-		{
-			this.draggedLineHook = this.hook;
-			this.svg.prepend(this.draggedLineHook);
-			this.hook.setAttribute("cx", this.cursor.getAttribute("cx"));
-			this.hook.setAttribute("cy", this.cursor.getAttribute("cy"));
-		}
-		
-		this.link.setAttribute("x1", this.draggedLineHook.getAttribute("cx"));
-		this.link.setAttribute("y1", this.draggedLineHook.getAttribute("cy"));
-		this.link.setAttribute("x2", this.cursor.getAttribute("cx"));
-		this.link.setAttribute("y2", this.cursor.getAttribute("cy"));
-		this.svg.prepend(this.link);
+		this.temp.link.x1 = this.hook.x;
+		this.temp.link.y1 = this.hook.y;
+		this.temp.link.x2 = this.temp.cursor.x;
+		this.temp.link.y2 = this.temp.cursor.y;
+		this.temp.link.show();
 	}
-	
+
 	onDragStop(e)
 	{
 		// TODO: Move all the important/implicit x=undefined to onMouseUp?
 		//	Think about subclasses and minimizing their assumptions more.
 		
-		const source = this.dragged;
-		const target = this.hovered;
+		const source = this.dragged.element;
+		const target = this.hovered && this.hovered.element;
 		
-		this.svg.removeChild(this.cursor);
-		this.svg.removeChild(this.link);
-		this.draggedParent.appendChild(this.dragged);
+		this.temp.cursor.hide();
+		this.temp.link.hide();
+		this.dragged.show();
+		
+		if (this.hook == this.temp.hook)
+			this.hook.hide();
+		
 		this.dragged = undefined;
-		this.draggedParent = undefined;
 		this.hit = undefined;
-		if (this.draggedLineParent)
-			this.draggedLineParent.prepend(this.draggedLine);
-		if (this.draggedLineHook == this.hook)
-			this.svg.removeChild(this.hook);
-		this.draggedLine = undefined;
-		this.draggedLineParent = undefined;
-		this.draggedLineHook = undefined;
+		this.hook = undefined;
 		
 		if (target) this.onDrop(source, target);
 	}
-	
+
 	onDragMove(e)
 	{
-		this.cursor.setAttribute("cx", e.x - this.hit.x);
-		this.cursor.setAttribute("cy", e.y - this.hit.y);
-		if (this.draggedLineHook)
+		this.temp.cursor.x = e.x - this.hit.x;
+		this.temp.cursor.y = e.y - this.hit.y;
+		if (this.hook)
 		{
-			this.link.setAttribute("x1", this.draggedLineHook.getAttribute("cx"));
-			this.link.setAttribute("y1", this.draggedLineHook.getAttribute("cy"));
-			this.link.setAttribute("x2", this.cursor.getAttribute("cx"));
-			this.link.setAttribute("y2", this.cursor.getAttribute("cy"));
+			this.temp.link.x1 = this.hook.x;
+			this.temp.link.y1 = this.hook.y;
+			this.temp.link.x2 = this.temp.cursor.x;
+			this.temp.link.y2 = this.temp.cursor.y;
 		}
 	}
-	
+
 	onHoverEnter(e)
 	{
-		this.hovered = e.target;
-		this.hoveredRadius = this.hovered.getAttribute("r");
-		this.hovered.setAttribute("r", "30");
+		this.hovered = new Circle(e.target);
+		this.hoveredRadius = this.hovered.r;
+		this.hovered.r = 30;
 		this.showGhost();
 	}
-	
+
 	onHoverLeave(e)
 	{
-		this.hovered.setAttribute("r", this.hoveredRadius);
+		this.hovered.r = this.hoveredRadius;
+		this.hideGhost();
 		this.hoveredRadius = undefined;
 		this.hovered = undefined;
-		this.hideGhost();
 	}
-	
+
 	onMouseMove(e)
 	{
 		if (!this.dragged) return;
 		this.onDragMove(e);
 		if (this.hovered)
 		{
-			if (this.hovered != e.target)
+			if (this.hovered.element != e.target)
 				this.onHoverLeave(e);
 		}
-		else if (this.isValidTarget(e.target))
+		else if (this.isHoverable(e.target))
 			this.onHoverEnter(e);
 	}
-	
+
 	onMouseDown(e)
 	{
-		if (this.isValidTarget(e.target))
+		if (this.isDraggable(e.target))
 			this.onDragStart(e);
 	}
-	
+
 	onMouseUp(e)
 	{
-		// TODO: Emulate a mouse capture by adding this listener
-		//	from within (a successful) mousedown event, removing
-		//	it from within mouseup after it is handled. Alternatively,
-		//	use addEventListener's third "options" argument for that.
 		if (this.dragged) this.onDragStop(e);
 		if (this.hovered) this.onHoverLeave(e);
 	}
-	
+
 	createMarkers()
 	{
 		const marker = this.svg.getElementById("end");
 		if (!marker) return;
 		
-		this.linkMarker = marker.cloneNode(true);
-		this.linkMarker.id = "end-link";
-		this.linkMarker.classList.add("hook");
-		marker.parentNode.append(this.linkMarker);
+		this.temp.linkMarker = marker.cloneNode(true);
+		this.temp.linkMarker.id = "end-link";
+		this.temp.linkMarker.classList.add("hook");
+		marker.parentNode.append(this.temp.linkMarker);
 		
-		this.traceMarker = marker.cloneNode(true);
-		this.traceMarker.id = "end-trace";
-		this.traceMarker.classList.add("ghost");
-		marker.parentNode.append(this.traceMarker);
+		this.temp.traceMarker = marker.cloneNode(true);
+		this.temp.traceMarker.id = "end-trace";
+		this.temp.traceMarker.classList.add("ghost");
+		marker.parentNode.append(this.temp.traceMarker);
 	}
-	
+
 	attach(svg)
 	{
 		this.svg = svg;
 		
 		this.createMarkers();
 		
-		this.cursor = document.createElementNS(this.svg.namespaceURI, "circle");
-		this.cursor.setAttribute("r", "18");
-		this.cursor.setAttribute("cx", "0");
-		this.cursor.setAttribute("cy", "0");
-		this.cursor.style.pointerEvents = "none";
-		this.cursor.classList.add("cursor");
+		this.temp.cursor = Circle.create(this.svg);
+		this.temp.cursor.r = 18;
+		this.temp.cursor.sset("pointer-events", "none");
+		this.temp.cursor.cadd("cursor");
 		
-		this.hook = document.createElementNS(this.svg.namespaceURI, "circle");
-		this.hook.setAttribute("r", "3");
-		this.hook.setAttribute("cx", "0");
-		this.hook.setAttribute("cy", "0");
-		this.hook.style.pointerEvents = "none";
-		this.hook.classList.add("hook");
+		this.temp.hook = Circle.create(this.svg);
+		this.temp.hook.r = 3;
+		this.temp.hook.sset("pointer-events", "none");
+		this.temp.hook.cadd("hook");
 		
-		this.link = document.createElementNS(this.svg.namespaceURI, "line");
-		this.link.setAttribute("x1", "0");
-		this.link.setAttribute("y1", "0");
-		this.link.setAttribute("x2", "0");
-		this.link.setAttribute("y2", "0");
-		this.link.style.pointerEvents = "none";
-		this.link.classList.add("link");
-		this.link.style.markerEnd = "url(#end-link)";
-		// TODO: The marker's fill doesn't adapt to the marked element's stroke.
-		//	SVG2 provides for something like { fill: context-stroke; } but it
-		//	doesn't seem to work.
-		// this.link.classList.add("arrow");
+		this.temp.link = Line.create(this.svg);
+		this.temp.link.sset("marker-end", "url(#end-link)");
+		this.temp.link.sset("pointer-events", "none");
+		this.temp.link.cadd("link");
 		
-		this.ghost = document.createElementNS(this.svg.namespaceURI, "circle");
-		this.ghost.setAttribute("r", "18");
-		this.ghost.setAttribute("cx", "0");
-		this.ghost.setAttribute("cy", "0");
-		this.ghost.style.pointerEvents = "none";
-		this.ghost.classList.add("ghost");
+		this.temp.ghost = Circle.create(svg);
+		this.temp.ghost.r = 18;
+		this.temp.ghost.sset("pointer-events", "none");
+		this.temp.ghost.cadd("ghost");
 		
-		this.trace = document.createElementNS(this.svg.namespaceURI, "line");
-		this.trace.setAttribute("x1", "0");
-		this.trace.setAttribute("y1", "0");
-		this.trace.setAttribute("x2", "0");
-		this.trace.setAttribute("y2", "0");
-		this.trace.style.pointerEvents = "none";
-		this.trace.classList.add("trace");
-		this.trace.style.markerEnd = "url(#end-trace)";
-		// this.trace.classList.add("arrow");
+		this.temp.trace = Line.create(svg);
+		this.temp.trace.sset("marker-end", "url(#end-trace)");
+		this.temp.trace.sset("pointer-events", "none");
+		this.temp.trace.cadd("trace");
 		
 		// TODO: Use Function.prototype.bind instead ?
 		
@@ -267,10 +422,12 @@ export class DragAndDropGroup
 		this.onMouseUpListener = e => { this.onMouseUp(e) };
 		document.addEventListener("mouseup", this.onMouseUpListener);
 	}
-	
+
 	detach()
 	{
 		if (!this.svg) return;
+		
+		// TODO: Destroy the temps.
 		
 		document.removeEventListener("mousemove", this.onMouseMoveListener);
 		this.onMouseMoveListener = undefined;
@@ -283,75 +440,60 @@ export class DragAndDropGroup
 		
 		this.svg = undefined;
 	}
-	
+
 	showGhost()
 	{
+		if (!this.dragged) return;
 		if (!this.hovered) return;
+		if (!this.hovered.other) return;
+		if (this.dragged.other && this.hovered.equals(this.dragged.other)) return;
 		
-		this.hoveredLine = this.findLineForCircle(this.hovered);
-		if (!this.hoveredLine) return;
+		this.temp.ghost.x = this.dragged.x;
+		this.temp.ghost.y = this.dragged.y;
+		this.temp.ghost.show();
 		
-		this.hoveredLineParent = this.hoveredLine.parentNode;
-		this.hoveredLine.parentNode.removeChild(this.hoveredLine);
+		if (this.hovered.line) this.hovered.line.hide();
 		
-		this.ghost.setAttribute("cx", this.dragged.getAttribute("cx"));
-		this.ghost.setAttribute("cy", this.dragged.getAttribute("cy"));
-		this.svg.append(this.ghost);
+		if (this.hook == this.temp.hook) return;
+		if (!this.hovered.other) return;
+		if (!this.hovered.line) return;
 		
-		// TODO: It would be nice for the trace to have an arrow shown,
-		//	but we can not use the regular marker because it doesn't
-		//	adapt its colors to the element it marks. Maybe we should
-		//	find the marker in the svg (or create one if it doesn't exist?)
-		//	then clone it (for both links and traces) and simply add it?
-		
-		const { white, black } = this.findCirclesForLine(this.hoveredLine);
-		
-		if (this.hovered === white)
+		if (this.hovered.line.wid == this.hovered.pid)
 		{
-			this.trace.setAttribute("x1", this.ghost.getAttribute("cx"));
-			this.trace.setAttribute("y1", this.ghost.getAttribute("cy"));
-			this.trace.setAttribute("x2", black.getAttribute("cx"));
-			this.trace.setAttribute("y2", black.getAttribute("cy"));
+			this.temp.trace.x1 = this.temp.ghost.x;
+			this.temp.trace.y1 = this.temp.ghost.y;
+			this.temp.trace.x2 = this.hovered.other.x;
+			this.temp.trace.y2 = this.hovered.other.y;
 		}
-		else if (this.hovered === black)
+		else
 		{
-			this.trace.setAttribute("x1", white.getAttribute("cx"));
-			this.trace.setAttribute("y1", white.getAttribute("cy"));
-			this.trace.setAttribute("x2", this.ghost.getAttribute("cx"));
-			this.trace.setAttribute("y2", this.ghost.getAttribute("cy"));
+			this.temp.trace.x1 = this.hovered.other.x;
+			this.temp.trace.y1 = this.hovered.other.y;
+			this.temp.trace.x2 = this.temp.ghost.x;
+			this.temp.trace.y2 = this.temp.ghost.y;
 		}
-		this.svg.prepend(this.trace);
+		this.temp.trace.show();
 	}
-	
+
 	hideGhost()
 	{
-		if (!this.hoveredLine) return;
-		// this.hoveredLine.parentNode.append(this.hoveredLine);
-		this.hoveredLineParent.append(this.hoveredLine);
-		this.hoveredLine = undefined;
-		this.svg.removeChild(this.ghost);
-		this.svg.removeChild(this.trace);
+		if (!this.hovered) return;
+		if (this.hovered.line && this.hovered.line.hidden)
+			this.hovered.line.show();
+		if (this.temp.ghost.shown) this.temp.ghost.hide();
+		if (this.temp.trace.shown) this.temp.trace.hide();
 	}
-	
-	findLineForCircle(circle)
+
+	isDraggable(target)
 	{
-		const pid = circle.getAttribute("data-pid");
-		const lines = this.svg.querySelectorAll("line");
-		for (const line of lines)
-		{
-			const wid = line.getAttribute("data-wid");
-			const bid = line.getAttribute("data-bid");
-			if (wid == pid || bid == pid) return line;
-		}
-		return undefined;
+		if (this.dragged != undefined) return false;
+		return target.nodeName == "circle";
 	}
-	
-	findCirclesForLine(line)
+
+	isHoverable(target)
 	{
-		const wid = line.getAttribute("data-wid");
-		const bid = line.getAttribute("data-bid");
-		const white = this.svg.querySelector(`circle[data-pid="${wid}"`);
-		const black = this.svg.querySelector(`circle[data-pid="${bid}"`);
-		return { white, black };
+		if (this.dragged == undefined) return false;
+		if (this.dragged.parent != target.parentNode) return false;
+		return target.nodeName == "circle";
 	}
 }

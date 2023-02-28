@@ -11,7 +11,7 @@
 .column { display: flex; flex-flow: column nowrap; gap: 1em; }
 .padded { padding: 1em 0 0 1em; }
 
-img { border: thin solid black; max-width: 800px; }
+svg { border: thin solid black; max-width: 800px; }
 
 .berger-table .ordered { color: black; }
 .berger-table .unordered { color: blue; }
@@ -46,7 +46,9 @@ img { border: thin solid black; max-width: 800px; }
 </div>
 <script>
 let berger = null;
-let table = null;
+let Tables = null;
+let DragAndDropGroup = null;
+let tables = null;
 let lastpc = null;
 let sparse = false;
 
@@ -66,7 +68,7 @@ function removeAll()
 	if (illu.length > 0)
 	{
 		$("#past-illustrations-pane").css("visibility", "visible");
-		$("#illustration > img").prependTo($("#past-illustrations"));
+		$("#illustration > svg").prependTo($("#past-illustrations"));
 		$("#illustration > *").remove();
 	}
 }
@@ -75,42 +77,48 @@ function appendGenerationStatus()
 {
 	$("#info *").remove();
 	const info = $("<span>").appendTo("#info");
-	const [ ok, msg ] = table.getGenerationStatus();
+	const [ ok, msg ] = tables.getGenerationStatus();
 	info.text(msg);
 	if (!ok) info.addClass("error");
 }
 
 function rerender()
 {
-	table.render(sparse);
+	tables.render(sparse);
 	$("#tables > *").remove();
-	table.append("#tables");
+	tables.append("#tables");
 }
 
 function render(pc)
 {
 	lastpc = pc;
 	
-	table.generate(pc, 1000, sparse);
+	tables.generate(pc, 1000, sparse);
 	appendGenerationStatus();
-	if (!table.ok()) return;
+	if (!tables.ok()) return;
 	
 	removeAll();
-	table.append("#tables");
-	$(berger.renderMapToImg(table.rm, 5, 100, 20)).appendTo("#illustration");
+	tables.append("#tables");
+	const svg = berger.renderMap(tables.rm, 5, 100, 20);
+	$("#illustration").append(svg);
+	new DragAndDropGroup(svg);
 }
 
 function main()
 {
-	table = new berger.Table();
+	tables = new Tables();
 	render(6);
 	$("#controls").css("visibility", "visible");
 }
 </script>
 <script src="../vendor/jquery-3.6.3.min.js"></script>
 <script type="module">
-import * as bergerjs from "../berger.js";
-berger = bergerjs;
+import * as berger_ from "../berger.js";
+berger = berger_;
+import { Tables as Tables_ } from "../Tables.js";
+Tables = Tables_;
+import { DragAndDropGroup as DragAndDropGroup_ } from "../DragAndDropGroup.js";
+DragAndDropGroup = DragAndDropGroup_;
 main();
 </script>
 </body>
