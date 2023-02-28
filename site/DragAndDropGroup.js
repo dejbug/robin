@@ -1,5 +1,3 @@
-// TODO: Snap the cursor to the mouse?
-
 // TODO: Make the link overlap the hover. Best way would be to
 //	create clones of the hover and the hook, make the originals
 //	invisible, then layer the temporary objects like so: cursor over
@@ -46,16 +44,13 @@ export class DragAndDropGroup
 	
 	onDragStart(e)
 	{
-		this.hit = {
-				x: e.clientX - e.target.getAttribute("cx"),
-				y: e.clientY - e.target.getAttribute("cy")
-		};
+		this.hit = this.svg.getBoundingClientRect();
 		this.dragged = e.target;
 		this.draggedParent = this.dragged.parentNode;
 		this.draggedParent.removeChild(this.dragged);
 		
-		this.cursor.setAttribute("cx", e.clientX - this.hit.x);
-		this.cursor.setAttribute("cy", e.clientY - this.hit.y);
+		this.cursor.setAttribute("cx", e.x - this.hit.x);
+		this.cursor.setAttribute("cy", e.y - this.hit.y);
 		this.svg.appendChild(this.cursor);
 		
 		const pid = this.dragged.getAttribute("data-pid");
@@ -117,8 +112,8 @@ export class DragAndDropGroup
 	
 	onDragMove(e)
 	{
-		this.cursor.setAttribute("cx", e.clientX - this.hit.x);
-		this.cursor.setAttribute("cy", e.clientY - this.hit.y);
+		this.cursor.setAttribute("cx", e.x - this.hit.x);
+		this.cursor.setAttribute("cy", e.y - this.hit.y);
 		if (this.draggedLineHook)
 		{
 			this.link.setAttribute("x1", this.draggedLineHook.getAttribute("cx"));
