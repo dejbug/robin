@@ -37,9 +37,9 @@ export class DragAndDropGroup
 		return true;
 	}
 	
-	onDrop()
+	onDrop(source, target)
 	{
-		console.log("dropped");
+		console.log("dropped", { source, target });
 	}
 	
 	onDragStart(e)
@@ -93,7 +93,8 @@ export class DragAndDropGroup
 	
 	onDragStop(e)
 	{
-		if (this.hovered) this.onDrop();
+		const source = this.dragged;
+		const target = this.hovered;
 		
 		this.svg.removeChild(this.cursor);
 		this.svg.removeChild(this.link);
@@ -108,6 +109,8 @@ export class DragAndDropGroup
 		this.draggedLine = undefined;
 		this.draggedLineParent = undefined;
 		this.draggedLineHook = undefined;
+		
+		if (target) this.onDrop(source, target);
 	}
 	
 	onDragMove(e)
