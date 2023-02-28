@@ -1,11 +1,26 @@
+// TODO: Snap the cursor to the mouse?
+
+// TODO: Make the link overlap the hover. Best way would be to
+//	create clones of the hover and the hook, make the originals
+//	invisible, then layer the temporary objects like so: cursor over
+//	hook over link over hover. But the easiest way might be to
+//	store the hover's fill and make it transparent.
+
 export class DragAndDropGroup
 {
 	constructor(svg = undefined)
 	{
 		this.svg = undefined;
 		
+		this.cursor = undefined;
+		this.link = undefined;
+		this.hook = undefined;
+		
 		this.dragged = undefined;
 		this.draggedParent = undefined;
+		this.draggedLine = undefined;
+		this.draggedLineParent = undefined;
+		this.draggedLineHook = undefined;
 		this.hoveredRadius = undefined;
 		this.hit = undefined;
 		this.hovered = undefined;
@@ -13,15 +28,6 @@ export class DragAndDropGroup
 		this.onMouseMoveListener = undefined;
 		this.onMouseDownListener = undefined;
 		this.onMouseUpListener = undefined;
-		
-		this.cursor = document.createElementNS(output.namespaceURI, "circle");
-		this.cursor.setAttribute("r", "20");
-		this.cursor.setAttribute("cx", "300");
-		this.cursor.setAttribute("cy", "200");
-		this.cursor.setAttribute("fill", "none");
-		this.cursor.setAttribute("stroke", "grey");
-		this.cursor.style.strokeWidth = "3px";
-		this.cursor.style.pointerEvents = "none";
 		
 		if (svg) this.attach(svg);
 	}
@@ -33,30 +39,93 @@ export class DragAndDropGroup
 		return true;
 	}
 	
+	onDrop()
+	{
+		console.log("dropped");
+	}
+	
 	onDragStart(e)
 	{
-		this.hit = { x: e.clientX - e.target.getAttribute("cx"), y: e.clientY - e.target.getAttribute("cy") };
+		this.hit = {
+				x: e.clientX - e.target.getAttribute("cx"),
+				y: e.clientY - e.target.getAttribute("cy")
+		};
 		this.dragged = e.target;
-		this.draggedParent = e.target.parentNode;
+		this.draggedParent = this.dragged.parentNode;
+		this.draggedParent.removeChild(this.dragged);
+		
 		this.cursor.setAttribute("cx", e.clientX - this.hit.x);
 		this.cursor.setAttribute("cy", e.clientY - this.hit.y);
-		this.draggedParent.removeChild(this.dragged);
 		this.svg.appendChild(this.cursor);
+		
+		const pid = this.dragged.getAttribute("data-pid");
+		const lines = this.svg.querySelectorAll("line");
+		for (const line of lines)
+		{
+			const wid = line.getAttribute("data-wid");
+			const bid = line.getAttribute("data-bid");
+			if (wid != pid && bid != pid) continue;
+			this.draggedLine = line;
+			this.draggedLineParent = this.draggedLine.parentNode;
+			this.draggedLineParent.removeChild(this.draggedLine);
+			
+			this.draggedLineHook = undefined;
+			const circles = this.svg.querySelectorAll("circle");
+			for (const circle of circles)
+			{
+				const oid = circle.getAttribute("data-pid");
+				if (oid == pid || oid != wid && oid != bid) continue;
+				this.draggedLineHook = circle;
+				break;
+			}
+			break;
+		}
+		
+		if (!this.draggedLineHook)
+		{
+			this.draggedLineHook = this.hook;
+			this.svg.prepend(this.draggedLineHook);
+			this.hook.setAttribute("cx", this.cursor.getAttribute("cx"));
+			this.hook.setAttribute("cy", this.cursor.getAttribute("cy"));
+		}
+		
+		this.link.setAttribute("x1", this.draggedLineHook.getAttribute("cx"));
+		this.link.setAttribute("y1", this.draggedLineHook.getAttribute("cy"));
+		this.link.setAttribute("x2", this.cursor.getAttribute("cx"));
+		this.link.setAttribute("y2", this.cursor.getAttribute("cy"));
+		this.svg.prepend(this.link);
 	}
 	
 	onDragStop(e)
 	{
+		if (this.hovered) this.onDrop();
+		
 		this.svg.removeChild(this.cursor);
-		this.draggedParent.append(this.dragged);
+		this.svg.removeChild(this.link);
+		this.draggedParent.appendChild(this.dragged);
 		this.dragged = undefined;
 		this.draggedParent = undefined;
 		this.hit = undefined;
+		if (this.draggedLineParent)
+			this.draggedLineParent.prepend(this.draggedLine);
+		if (this.draggedLineHook == this.hook)
+			this.svg.removeChild(this.hook);
+		this.draggedLine = undefined;
+		this.draggedLineParent = undefined;
+		this.draggedLineHook = undefined;
 	}
 	
 	onDragMove(e)
 	{
 		this.cursor.setAttribute("cx", e.clientX - this.hit.x);
 		this.cursor.setAttribute("cy", e.clientY - this.hit.y);
+		if (this.draggedLineHook)
+		{
+			this.link.setAttribute("x1", this.draggedLineHook.getAttribute("cx"));
+			this.link.setAttribute("y1", this.draggedLineHook.getAttribute("cy"));
+			this.link.setAttribute("x2", this.cursor.getAttribute("cx"));
+			this.link.setAttribute("y2", this.cursor.getAttribute("cy"));
+		}
 	}
 	
 	onHoverEnter(e)
@@ -96,7 +165,8 @@ export class DragAndDropGroup
 	{
 		// TODO: Emulate a mouse capture by adding this listener
 		//	from within (a successful) mousedown event, removing
-		//	it from within mouseup after it is handled.
+		//	it from within mouseup after it is handled. Alternatively,
+		//	use addEventListener's third "options" argument for that.
 		if (this.dragged) this.onDragStop(e);
 		if (this.hovered) this.onHoverLeave(e);
 	}
@@ -105,8 +175,36 @@ export class DragAndDropGroup
 	{
 		this.svg = svg;
 		
+		this.cursor = document.createElementNS(this.svg.namespaceURI, "circle");
+		this.cursor.setAttribute("r", "18");
+		this.cursor.setAttribute("cx", "0");
+		this.cursor.setAttribute("cy", "0");
+		this.cursor.setAttribute("fill", "white");
+		this.cursor.setAttribute("stroke", "grey");
+		this.cursor.style.strokeWidth = "2px";
+		this.cursor.style.pointerEvents = "none";
+		
+		this.hook = document.createElementNS(this.svg.namespaceURI, "circle");
+		this.hook.setAttribute("r", "3");
+		this.hook.setAttribute("cx", "0");
+		this.hook.setAttribute("cy", "0");
+		this.hook.setAttribute("fill", "grey");
+		this.hook.setAttribute("stroke", "none");
+		this.hook.style.pointerEvents = "none";
+		
+		this.link = document.createElementNS(this.svg.namespaceURI, "line");
+		this.link.setAttribute("x1", "0");
+		this.link.setAttribute("y1", "0");
+		this.link.setAttribute("x2", "0");
+		this.link.setAttribute("y2", "0");
+		this.link.setAttribute("stroke", "grey");
+		this.link.style.strokeWidth = "2px";
+		this.link.style.pointerEvents = "none";
+		
+		// TODO: Use Function.prototype.bind instead ?
+		
 		this.onMouseMoveListener = e => { this.onMouseMove(e) };
-		this.svg.addEventListener("mousemove", this.onMouseMoveListener);
+		document.addEventListener("mousemove", this.onMouseMoveListener);
 		
 		this.onMouseDownListener = e => { this.onMouseDown(e) };
 		this.svg.addEventListener("mousedown", this.onMouseDownListener);
@@ -119,7 +217,7 @@ export class DragAndDropGroup
 	{
 		if (!this.svg) return;
 		
-		this.svg.removeEventListener("mousemove", this.onMouseMoveListener);
+		document.removeEventListener("mousemove", this.onMouseMoveListener);
 		this.onMouseMoveListener = undefined;
 		
 		this.svg.removeEventListener("mousedown", this.onMouseDownListener);

@@ -12,11 +12,14 @@ svg { border: thin solid grey; }
 <body>
 <svg id="output" width="600" height="400">
 <g>
-<circle r="20" cx="100" cy="100" fill="white" stroke="black"/>
-<circle r="20" cx="200" cy="100" fill="white" stroke="black"/>
+<line data-wid="1" data-bid="3" x1="100" y1="100" x2="100" y2="200" stroke="black"/>
 </g>
 <g>
-<circle r="20" cx="100" cy="200" fill="white" stroke="black"/>
+<circle data-pid="1" r="20" cx="100" cy="100" fill="white" stroke="black"/>
+<circle data-pid="2" r="20" cx="200" cy="100" fill="white" stroke="black"/>
+</g>
+<g>
+<circle data-pid="3" r="20" cx="100" cy="200" fill="white" stroke="black"/>
 <circle r="20" cx="200" cy="200" fill="white" stroke="black"/>
 </g>
 </svg>
