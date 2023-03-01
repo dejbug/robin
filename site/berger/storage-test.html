@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="icon" type="image/svg" href="../crosshatch.svg">
+	<title>berger</title>
+<style>
+.padded { padding: .3em; }
+.inset { margin: .3em; }
+.box { border: thin solid grey; }
+.box.blue { border-color: blue !important; }
+.box.red { border-color: red !important; }
+.row { display: flex; flex-flow: row; }
+.col { display: flex; flex-flow: column; }
+#head { display: flex; height: 1em;}
+#head > h1 { font-size: 1em; margin: 0; }
+label { width: 3em; color: lightgrey; }
+input[type="text"] { width: 100%; }
+</style>
+</head>
+<body>
+<!--<div id="head" class="inset padded"><h1>Neues Turnier</h1></div>-->
+<div id="main" class="col inset padded"></div>
+<script type="module">
+import * as pif from "../PlayersInputForm.js";
+
+const form = new pif.Form("main");
+const row = pif.Row.create(form.count + 1);
+form.append(row);
+</script>
+</body>
+</html>

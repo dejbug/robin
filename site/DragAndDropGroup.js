@@ -1,6 +1,6 @@
 // TODO: Show text in cursor.
 
-// TODO: Make this a little more general. In particular,
+// TODO: Make this a little bit more general. In particular,
 //	change pid, wid, bid to something else: id/index,
 //	source/from/start, target/sink/to/end.
 
@@ -25,10 +25,10 @@
 //	hook over link over hover. But the easiest way might be to
 //	store the hover's fill and make it transparent.
 
-// TODO: Emulate a mouse capture by adding this listener
+// TODO: Emulate captures by adding the mouseup listener
 //	from within (a successful) mousedown event, removing
 //	it from within mouseup after it is handled. Alternatively,
-//	use addEventListener's third "options" argument for that.
+//	take a look at addEventListener's "options" argument.
 
 class Element
 {
@@ -61,8 +61,7 @@ class Element
 
 	show(append = true)
 	{
-		// TODO: Calling show(false) looks like we are
-		//	hiding something!
+		// TODO: Calling show(false) looks like we are hiding something.
 		
 		console.assert(this._shown <= 0, "already shown");
 		if (this._shown > 0) return false;
@@ -258,7 +257,7 @@ export class DragAndDropGroup
 
 	onDrop(source, target)
 	{
-		// console.log("dropped", { source, target });
+		console.log("dropped", { source, target });
 	}
 
 	onDragStart(e)
