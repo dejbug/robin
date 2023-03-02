@@ -138,6 +138,14 @@ export class Form
 			row.index = ++i;
 	}
 	
+	renormalize()
+	{
+		for (const row of this.rows)
+			if (row.empty)
+				this.remove(row);
+		this.reindex();
+	}
+	
 	onRowFocus(row, e) { this.focus = row; }
 	
 	onRowKeyDown(row, e)
@@ -177,8 +185,8 @@ export class Form
 		e.preventDefault();
 		if (e.ctrlKey)
 		{
-			if (row.empty) this.remove(row);
-			else row.input.blur();
+			row.input.blur();
+			this.renormalize();
 			this.oncommit(this);
 		}
 		else if (this.count > row.index && row.next)
