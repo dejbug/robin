@@ -45,6 +45,8 @@ export class Row
 	
 	get text() { return this.input.value.trim() }
 	
+	set text(s) { return this.input.value = s }
+	
 	get empty() { return !this.text }
 	
 	get isFirst() { return this.element.firstChild == this.element }
@@ -71,6 +73,19 @@ export class Form
 	{
 		console.assert(typeof(id) == "string", "id must be a string");
 		this.element = document.getElementById(id);
+	}
+	
+	load(json)
+	{
+		const data = JSON.parse(json);
+		let row = undefined;
+		for (let item of data)
+		{
+			const row = Row.create(this.count + 1);
+			row.text = item[1];
+			this.append(row);
+		}
+		if (row) row.focus();
 	}
 	
 	oncommit() 	{ console.log(this.rows.map(r => r.text)) }

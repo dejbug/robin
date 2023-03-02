@@ -30,9 +30,10 @@ input[type="text"] { width: 100%; }
 import { CrossTable } from "../CrossTable.js";
 import * as pif from "../PlayersInputForm.js";
 const form = new pif.Form("main");
+form.load(localStorage.players);
 form.add();
 form.oncommit = () => {
-	console.log(form.json);
+	localStorage.players = form.json;
 	if (form.empty) return;
 	const data = { players: form.items, matches: [] };
 	// console.log(new Matches(data));
