@@ -49,15 +49,22 @@ export class Row
 	
 	get empty() { return !this.text }
 	
-	get isFirst() { return this.element.firstChild == this.element }
+	get isFirst() { return this.element.parentNode.firstChild == this.element }
 	
-	get isLast() { return this.parent.element.lastChild == this.element }
+	get isLast() { return this.element.parentNode.lastChild == this.element }
 	
 	get index() {
 		const groups = this.label.getAttribute("for").match(/pid-(\d+)/);
 		console.assert(groups, "no pid");
 		console.assert(1 in groups, "invalid pid");
 		return groups && parseInt(groups[1]);
+	}
+	
+	set index(n)
+	{
+		this.label.setAttribute("for", `pid-${n}`);
+		this.label.innerText = `#${n}`;
+		this.input.setAttribute("id", `pid-${n}`);
 	}
 	
 	get parent() { return this.element.parentNode }
@@ -73,16 +80,19 @@ export class Form
 	{
 		console.assert(typeof(id) == "string", "id must be a string");
 		this.element = document.getElementById(id);
+		this.focus = undefined;
 	}
 	
 	load(json)
 	{
 		const data = JSON.parse(json);
 		let row = undefined;
-		for (let item of data)
+		for (const item of data)
 		{
+			const text = item[1].trim()
+			if (!text) continue;
 			const row = Row.create(this.count + 1);
-			row.text = item[1];
+			row.text = text;
 			this.append(row);
 		}
 		if (row) row.focus();
@@ -103,6 +113,7 @@ export class Form
 	append(row, focus = true)
 	{
 		row.callback = e => this.onRowKeyDown(row, e);
+		row.input.onfocus = e => this.onRowFocus(row, e);
 		this.element.append(row.element)
 		if (focus) row.focus();
 	}
@@ -120,20 +131,31 @@ export class Form
 		row.focus();
 	}
 	
-	onRowKeyDown(row, e)
+	reindex()
 	{
-		if (e.keyCode == 27)
-			this.onRowEscape(row, e);
-		else if (e.keyCode == 8)
-			this.onRowBackspace(row, e);
-		else if (e.keyCode == 13)
-			this.onRowReturn(row, e);
+		let i = 0;
+		for (const row of this.rows)
+			row.index = ++i;
 	}
 	
-	onRowEscape(row, e)
+	onRowFocus(row, e) { this.focus = row; }
+	
+	onRowKeyDown(row, e)
 	{
-		row.input.value = "";
+		const k = e.keyCode;
+		if (k == 27)
+			this.onRowEscape(row, e);
+		else if (k == 8)
+			this.onRowBackspace(row, e);
+		else if (k == 13)
+			this.onRowReturn(row, e);
+		else if (k == 38 && !this.focus.isFirst)
+			this.focus.prev.focus();
+		else if (k == 40 && !this.focus.isLast)
+			this.focus.next.focus();
 	}
+	
+	onRowEscape(row, e) { row.input.value = "" }
 	
 	onRowBackspace(row, e)
 	{
@@ -144,6 +166,7 @@ export class Form
 			{
 				e.preventDefault();
 				this.remove(row);
+				if (!prev.isLast) this.reindex();
 				prev.focus();
 			}
 		}
@@ -164,9 +187,5 @@ export class Form
 			this.onRowInput(row, e);
 	}
 	
-	onRowInput(row, e)
-	{
-		if (row.text)
-			this.add();
-	}
+	onRowInput(row, e) { if (row.text) this.add() }
 }
