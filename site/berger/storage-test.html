@@ -5,6 +5,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="icon" type="image/svg" href="../crosshatch.svg">
 	<title>berger</title>
+	<link href="../global.css" rel="stylesheet">
 <style>
 .padded { padding: .3em; }
 .inset { margin: .3em; }
@@ -22,12 +23,26 @@ input[type="text"] { width: 100%; }
 <body>
 <!--<div id="head" class="inset padded"><h1>Neues Turnier</h1></div>-->
 <div id="main" class="col inset padded"></div>
+<div id="crosstable"></div>
+<script src="../vendor/jquery-3.6.3.min.js"></script>
 <script type="module">
+// import { Matches } from "../Matches.js";
+import { CrossTable } from "../CrossTable.js";
 import * as pif from "../PlayersInputForm.js";
-
 const form = new pif.Form("main");
-const row = pif.Row.create(form.count + 1);
-form.append(row);
+form.add();
+form.oncommit = () => {
+	console.log(form.json);
+	if (form.empty) return;
+	const data = { players: form.items, matches: [] };
+	// console.log(new Matches(data));
+	// main.parentNode.removeChild(main);
+	main.style.display = "none";
+	const table = new CrossTable("#crosstable");
+	table.installEvents();
+	table.setData(data);
+	table.update();
+};
 </script>
 </body>
 </html>

@@ -1,3 +1,6 @@
+// TODO: Look at document.elementFromPoint and
+//	window.getComputedStyle.
+
 // TODO: Show text in cursor.
 
 // TODO: Make this a little bit more general. In particular,

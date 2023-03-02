@@ -73,7 +73,17 @@ export class Form
 		this.element = document.getElementById(id);
 	}
 	
+	oncommit() 	{ console.log(this.rows.map(r => r.text)) }
+	
+	get json() { return JSON.stringify(this.items) }
+	
+	get items() { return Array.prototype.map.call(this.rows, r => [r.index, r.text]) }
+	
+	get rows() { return Array.prototype.map.call(this.element.children, e => new Row(e)) }
+	
 	get count() { return this.element.children.length }
+	
+	get empty() { return this.count <= 0 }
 	
 	append(row, focus = true)
 	{
@@ -128,7 +138,11 @@ export class Form
 	{
 		e.preventDefault();
 		if (e.ctrlKey)
-			row.input.blur();
+		{
+			if (row.empty) this.remove(row);
+			else row.input.blur();
+			this.oncommit(this);
+		}
 		else if (this.count > row.index && row.next)
 			row.next.focus();
 		else
