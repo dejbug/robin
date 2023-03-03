@@ -16,6 +16,32 @@
 .box { border: thin solid grey; }
 .box.blue { border-color: blue !important; }
 .box.red { border-color: red !important; }
+#pairings > div {
+	display: flex;
+	flex-flow: row wrap;
+	border: thin solid black;
+	margin-top: .5em;
+}
+#pairings > div > div {
+	display: flex;
+	flex-flow: row;
+	align-items: baseline;
+	padding: .3em;
+	border: thin dotted blue;
+}
+#pairings > div > div > span:nth-child(1) {
+	display: inline-block;
+	width: 2em;
+	text-align: right;
+	margin-right: 1em;
+	border: thin solid grey;
+	padding: .1em;
+	font-family: monospace;
+	font-weight: bold;
+}
+#pairings > div > div > span:nth-child(1n+2) {
+	display: inline-block; border: thin solid grey; padding: .1em; font-family: sans;
+}
 </style>
 </head>
 <body>
@@ -26,37 +52,66 @@
 	</div>
 </div>
 <div id="crosstable"></div>
+<!--<div id="pairings">
+	<div>
+		<div><span>1</span><span>aaaaaaaa</span> - <span>bbbbbbbbb</span></div>
+		<div><span>1</span><span>cccccc</span> - <span>dddddd</span></div>
+		<div><span>1</span><span>eeeeeeeeeeee</span> - <span>fff</span></div>
+	</div>
+</div>-->
 <script src="../vendor/jquery-3.6.3.min.js"></script>
 <script type="module">
 import { Matches } from "../Matches.js";
 import { CrossTable } from "../CrossTable.js";
+import { PairingsTable } from "../PairingsTable.js";
 import * as pif from "../PlayersInputForm.js";
+
+// resetLocalStorage();
+
+function resetLocalStorage()
+{
+	delete localStorage.players;
+	delete localStorage.matches;
+}
+
+const table = new CrossTable("#crosstable");
+table.onmatchupdate = (row, col, m) => {
+	console.log("table.onmatchupdate", row, col, m);
+	console.log("table.onmatchupdate", table.model.matches.ma);
+	table.saveToLocalStorage();
+};
+table.installEvents();
+table.loadFromLocalStorage();
+
+const pt = new PairingsTable("pairings", table);
+// pt.show();
+
 const form = new pif.Form("form");
-form.load(localStorage.players);
+form.load(table.model.matches.pa);
 form.add();
 form.oncommit = () => {
-	form.shuffle();
-	localStorage.players = form.json;
+	// table.saveToLocalStorage();
 	if (form.empty) return;
-	const data = { players: form.items, matches: [] };
-	const mm = new Matches(data);
-	
-	// TODO: We need to store the current crosstable
-	//	model and allow to add/remove/rename players.
-	//	It's late and my thinking's muddled. Sleep.
-	console.log(mm);
-	mm.addPlayer("hi");
-	mm.removePlayer(13);
-	
-	console.log(mm);
-	form.hide(true);
-	const table = new CrossTable("#crosstable");
-	table.installEvents();
-	table.setData(data);
+	table.model.renormalize();
+	table.saveToLocalStorage();
 	table.update();
+	form.hide(true);
+};
+form.onappend = row => {
+	console.log("row appended", row.index, row.pid, row.text);
+	table.model.addPlayer(row.text);
+};
+form.onedit = row => {
+	console.log("row changed", row.index, row.pid, row.text);
+	table.model.setPlayerName(row.pid, row.text);
 };
 form.onremove = row => {
-	console.log("removed", row.index, row.text, row);
+	console.log("row removed", row.index, row.pid, row.text);
+	table.model.removePlayer(row.index);
+	// console.log(table.model.matches.json);
+};
+form.onshuffle = map => {
+	console.log("onshuffle", map);
 };
 // const submit = document.querySelector("#form ~ div > input");
 // const submit = document.querySelector('input[type="button"][value="start"]');

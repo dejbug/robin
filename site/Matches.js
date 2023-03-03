@@ -1,3 +1,5 @@
+// TODO: Adding/removing/renormalization: handle dropouts!
+
 // TODO: Study more graph theory! We already have a Berger
 //	table generator (rather improvised and slow but general) just
 //	haven't figured out a fairer way of distributing colors yet. It
@@ -77,25 +79,48 @@ export class Matches
 		
 		this.pa = [];
 		this.pd = {};
-		this.setPlayers(json.players);
 		
 		this.ma = [];
 		this.md = {};
-		this.setMatches(json.matches);
+		
+		this.json = json;
+	}
+
+	get json() { return JSON.stringify({ players: this.pa, matches: this.ma}) }
+
+	set json(json)
+	{
+		this.dropouts = [];
+		const data = JSON.parse(json);
+		// console.info(json, data);
+		this.setPlayers(data.players);
+		this.setMatches(data.matches);
 	}
 
 	setPlayers(players)
 	{
 		this.pa = players;	// players array
+		// this.renormalize();
+		this.updatePlayersDict();
+	}
+
+	reindexPlayers() { this.pa = this.pa.filter(p => p != undefined) }
+
+	updatePlayersDict()
+	{
 		this.pd = [];		// players dict
-		for (let i = 0; i < this.pa.length; ++i)
+		// for (let i = 0; i < this.pa.length; ++i)
+		for (const p of this.pa)
 		{
+			// TODO: We don't really need this. We only use it to
+			//	quickly check (player/match) existence.
 			// TODO: It might have been smarter to store the player's
-			//	pa index i rather than their name.
+			//	pa index i rather than their name. Otherwise
+			//	rename this to names or playerNameStringTable (!).
 			// TODO: Maybe just renormalize? Assign consecutive
 			//	integers 1, 2, ... as pids ? Checking for pid inclusion
 			//	could be done with ranges rather than with find().
-			const p = this.pa[i];
+			if (!p) continue;
 			this.pd[p[0]] = p[1];
 		}
 	}
@@ -103,13 +128,68 @@ export class Matches
 	setMatches(matches)
 	{
 		this.ma = matches;
+		// this.renormalize();
+		this.updateMatchesDict();
+	}
+	
+	reindexMatches() { this.ma = this.ma.filter(m => m != undefined) }
+
+	updateMatchesDict()
+	{
 		this.md = {};
-		for (let i = 0; i < this.ma.length; ++i)
+		for (const i in this.ma)
 		{
 			const m = this.ma[i];
 			madd(this.md, m[0], m[1], i);
 			madd(this.md, m[1], m[0], i);
 		}
+	}
+
+	renormalize()
+	{
+		// The pids are only for our benefit. They have nothing to do
+		//	with database player ids. So this is safe. If we need to
+		//	keep track of database ids, add another LUT.
+		
+		const oo = {};
+		const nn = {};
+		
+		let pid = 0;
+		for (const i in this.pa)
+		{
+			if (!this.pa[i]) continue;
+			oo[i] = this.pa[i][0];
+			nn[i] = ++pid;
+		}
+		
+		for (const i in nn)
+		{
+			if (oo[i] == nn[i]) continue;
+			
+			this.pa[i][0] = nn[i];
+			
+			for (const j in this.ma)
+			{
+				console.log(i, j, this.ma[j], this.ma.length);
+				if (this.ma[j][0] == oo[i])
+					this.ma[j][0] = nn[i];
+				if (this.ma[j][1] == oo[i])
+					this.ma[j][1] = nn[i];
+			}
+			
+			const k = this.dropouts.findIndex(pid => pid == oo[i]);
+			if (k >= 0) this.dropouts[k] = nn[i];
+		}
+		
+		// console.log(this.ma);
+		
+		this.reindexPlayers();
+		this.reindexMatches();
+		
+		// console.log(this.ma);
+		
+		this.updatePlayersDict();
+		this.updateMatchesDict();
 	}
 
 	get count() { throw new Error("deprecated: use playerCount"); }
@@ -122,6 +202,8 @@ export class Matches
 
 	getHighestPid()
 	{
+		if (this.playerCount <= 0) return 0;
+		
 		const pid = parseInt(Object.keys(this.pd).reduce(
 			(k1, k2) => k1 > k2 ? k1 : k2)
 		);
@@ -141,9 +223,24 @@ export class Matches
 
 	removePlayer(pid)
 	{
-		if (!this.hasPlayer(pid)) return;
-		const p = this.pa.find(p => p[0] == pid);
-		console.log(p);
+		if (!this.hasPlayer(pid)) return false;
+		const index = this.pa.findIndex(p => p[0] == pid);
+		delete this.pa[index];
+		this.removeMatchesForPlayer(pid);
+		this.reindexPlayers();
+		return true;
+	}
+
+	setPlayerName(pid, name)
+	{
+		console.log("setPlayerName", pid, name);
+		if (!this.hasPlayer(pid)) return false;
+		const i = this.pa.findIndex(p => p[0] == pid);
+		if (i < 0) return false;
+		this.pa[i] = [pid, name];
+		this.pd[pid] = name;
+		console.log(this.pa, this.pd);
+		return true;
 	}
 
 	clearMatches()
@@ -171,9 +268,16 @@ export class Matches
 		return i;
 	}
 
-	removeMatch(p1, p2)
+	removeMatchesForPlayer(pid)
 	{
-		throw new Error("Not implemented yet.");
+		for (const i in this.ma)
+		{
+			const m = this.ma[i];
+			if (m[0] == pid || m[1] == pid)
+				delete this.ma[i];
+		}
+		delete this.md[pid];
+		// this.reindexMatches();
 	}
 
 	ensureMatchExists(p1, p2)

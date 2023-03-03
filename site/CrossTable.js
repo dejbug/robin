@@ -3,6 +3,11 @@ import { CrossTableHighlighter } from "./CrossTableHighlighter.js";
 import { Matches } from "./Matches.js";
 import { SortedMatches } from "./SortedMatches.js";
 
+// FIXME: Isolate the model from the controller & view
+//	more thoroughly. So that all auxiliary controllers can
+//	update it independently, triggering events. Maybe
+//	start migrating to a (cross-browser) framework?
+
 // The problem is that once we start the tournament
 //	with N players, we've kinda committed to the
 //	full N-1 rounds. Yes we can pull some matches
@@ -97,6 +102,8 @@ export class CrossTable
 		};
 	}
 
+	onmatchupdate(row, col, m) { console.log("onmatchupdate", row, col, m)  }
+
 	attach() { if(this.table) $(this.table).appendTo(this.paneId); }
 
 	remove() { if(this.table) $(this.table).remove(); }
@@ -104,6 +111,35 @@ export class CrossTable
 	installEvents() { $(this.paneId).on("mousedown", e => { this.onMouseDown(e) }); }
 
 	setData(data) { return this.model = new SortedMatches(new Matches(data)); }
+
+	loadFromLocalStorage()
+	{
+		const pj = localStorage.players || "[]";
+		const mj = localStorage.matches || "[]";
+		// console.log("load: pj", pj);
+		// console.log("load: mj", mj);
+		const data = { players: [], matches: [] };
+		try {
+			data.players = JSON.parse(pj);
+			data.matches = JSON.parse(mj);
+			// console.info("data", data);
+		} catch (e) {
+			console.error(e);
+		}
+		const json = JSON.stringify(data);
+		// console.log(json);
+		return this.setData(json);
+	}
+
+	saveToLocalStorage()
+	{
+		const pj = JSON.stringify(this.model.matches.pa);
+		const mj = JSON.stringify(this.model.matches.ma);
+		// console.log("save: pj", pj);
+		// console.log("save: mj", mj);
+		localStorage.players = pj;
+		localStorage.matches = mj;
+	}
 
 	getCell(row, col) { return this.table[0].childNodes[row].childNodes[col]; }
 
@@ -161,9 +197,10 @@ export class CrossTable
 		const players = this.model.matches.pa;
 		const pid2row = this.model.pid2row;
 		
-		for (let i = 0; i < players.length; ++i)
+		// for (let i = 0; i < players.length; ++i)
+		for (const p of players)
 		{
-			const p = players[i];
+			if (!p) continue;
 			const row = pid2row[p[0]];
 			const cell = $(this.getNameCell(row));
 			cell.text(p[1]);
@@ -267,7 +304,7 @@ export class CrossTable
 		
 		if (!this.model) return false;
 		this.remove();
-		this.create(this.model.matches.pa.length);
+		this.create(this.model.matches.playerCount);
 		this.fill();
 		this.attach();
 		if (this.opt.keepLastHighlight)
@@ -364,7 +401,7 @@ export class CrossTable
 		else if (e.button == 1)
 		{
 			// this.hi.clearMatchHighlights();
-			this.toggleScoreState(row, col);
+			this.toggleScoreState(row, col, true);
 		}
 	}
 
@@ -472,7 +509,7 @@ export class CrossTable
 		this.update();
 	}
 
-	toggleScoreState(row, col)
+	toggleScoreState(row, col, notify = false)
 	{
 		// this.hi.clearMatchHighlights(row, col);
 		const rowpid = this.model.row2pid[row];
@@ -483,7 +520,9 @@ export class CrossTable
 		const match = this.model.matches.getMatchInfo(rowpid, colpid);
 		const whiteScoreClicked = rowpid == match[0];
 		match.toggleResult(whiteScoreClicked);
-		this.update();	// FIXME: We need to update a single cell here.
+		this.update();	// FIXME: We just need to update a single cell here.
+		if (notify && this.onmatchupdate)
+			this.onmatchupdate(row, col, match.m);
 	}
 
 	toggleRoundIdMode()

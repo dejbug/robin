@@ -25,7 +25,32 @@ export class SortedMatches
 		//	expectations of the user.
 		this.sortById();
 	}
-
+	
+	renormalize()
+	{
+		this.matches.renormalize();
+		this.sortById(false);
+	}
+	
+	addPlayer(name)
+	{
+		const pid = this.matches.addPlayer(name);
+		this.renormalize();
+		this.sortById(false);
+	}
+	
+	removePlayer(pid)
+	{
+		this.matches.removePlayer(pid);
+		this.renormalize();
+		this.sortById(false);
+	}
+	
+	setPlayerName(pid, name)
+	{
+		return this.matches.setPlayerName(pid, name);
+	}
+	
 	dump()
 	{	
 		this.sortByName();
@@ -71,11 +96,14 @@ export class SortedMatches
 			}
 			return reversed ? 1 - cmp : cmp;
 		});
-		for (let i = 0; i < pa.length; ++i)
+		// for (let i = 0; i < pa.length; ++i)
+		let rid = 0;
+		for (const p of pa)
 		{
-			const row = i + 1;
-			this.row2pid[row] = pa[i][0];
-			this.pid2row[pa[i][0]] = row;
+			if (!p) continue;
+			const row = ++rid;
+			this.row2pid[row] = p[0];
+			this.pid2row[p[0]] = row;
 		}
 	}
 

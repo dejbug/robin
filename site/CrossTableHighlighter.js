@@ -190,6 +190,12 @@ export class CrossTableHighlighter
 
 	setRoundHighlight(index, on = true)
 	{
+		// FIXME: We get into trouble if we let pids grow arbitrarily. A berger
+		//	table is pitting pids against each other, not row indexes. Make
+		//	sure that any updates to the roster will trigger a renormalization.
+		//	Side note. This is getting too messy. Do separate the model
+		//	from the view soon, will you please?
+		
 		// FIXME: The code is messy. Clean it up.
 		
 		if (this.lastRoundHighlight != null)
@@ -218,8 +224,8 @@ export class CrossTableHighlighter
 		let desk = 1;
 		
 		pairings.forEach(([wpid, bpid]) => {
-			const wbye = wpid > playerCount;
-			const bbye = bpid > playerCount;
+			const wbye = !this.table.model.matches.hasPlayer(wpid);
+			const bbye = !this.table.model.matches.hasPlayer(bpid);
 			
 			const wdrop = this.table.model.matches.isDropout(wpid);
 			const bdrop = this.table.model.matches.isDropout(bpid);

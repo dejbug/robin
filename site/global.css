@@ -9,7 +9,7 @@ table > tr > td:nth-child(2) { font-family: serif; }
 .data-cc-highlight-player { background-color: #eee; }
 .data-cc-highlight-round-white { background-color: #ffcc66; font-weight: bold; }
 .data-cc-highlight-round-black { background-color: #8e5925; color: white; font-weight: bold; }
-.data-cc-highlight-round-desk { background-color: #a6ccf2; font-weight: bold; }
+.data-cc-highlight-round-desk { background-color: paleturquoise; font-weight: bold; }
 .data-cc-highlight-round-index { color: crimson; }
 .data-cc-highlight-round-index.data-cc-dropout { color: crimson !important; }
 
