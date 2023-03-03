@@ -7,43 +7,60 @@
 	<title>berger</title>
 	<link href="../global.css" rel="stylesheet">
 <style>
+.flex { display: flex; }
+.row { display: flex; flex-flow: row nowrap; }
+.col { display: flex; flex-flow: column nowrap; }
+.flex.end { justify-content: flex-end; }
 .padded { padding: .3em; }
-.inset { margin: .3em; }
+.offset { margin: .3em; }
 .box { border: thin solid grey; }
 .box.blue { border-color: blue !important; }
 .box.red { border-color: red !important; }
-.row { display: flex; flex-flow: row; }
-.col { display: flex; flex-flow: column; }
-#head { display: flex; height: 1em;}
-#head > h1 { font-size: 1em; margin: 0; }
-label { width: 3em; color: lightgrey; }
-input[type="text"] { width: 100%; }
 </style>
 </head>
 <body>
-<!--<div id="head" class="inset padded"><h1>Neues Turnier</h1></div>-->
-<div id="main" class="col inset padded"></div>
+<div>
+	<div id="form" class="col offset padded"></div>
+	<div class="offset padded flex end">
+		<input id="start" type="button" value="start"></input>
+	</div>
+</div>
 <div id="crosstable"></div>
 <script src="../vendor/jquery-3.6.3.min.js"></script>
 <script type="module">
-// import { Matches } from "../Matches.js";
+import { Matches } from "../Matches.js";
 import { CrossTable } from "../CrossTable.js";
 import * as pif from "../PlayersInputForm.js";
-const form = new pif.Form("main");
+const form = new pif.Form("form");
 form.load(localStorage.players);
 form.add();
 form.oncommit = () => {
+	form.shuffle();
 	localStorage.players = form.json;
 	if (form.empty) return;
 	const data = { players: form.items, matches: [] };
-	// console.log(new Matches(data));
-	// main.parentNode.removeChild(main);
-	main.style.display = "none";
+	const mm = new Matches(data);
+	
+	// TODO: We need to store the current crosstable
+	//	model and allow to add/remove/rename players.
+	//	It's late and my thinking's muddled. Sleep.
+	console.log(mm);
+	mm.addPlayer("hi");
+	mm.removePlayer(13);
+	
+	console.log(mm);
+	form.hide(true);
 	const table = new CrossTable("#crosstable");
 	table.installEvents();
 	table.setData(data);
 	table.update();
 };
+form.onremove = row => {
+	console.log("removed", row.index, row.text, row);
+};
+// const submit = document.querySelector("#form ~ div > input");
+// const submit = document.querySelector('input[type="button"][value="start"]');
+document.querySelector("#start").onclick = e => { form.commit() };
 </script>
 </body>
 </html>

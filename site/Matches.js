@@ -1,3 +1,24 @@
+// TODO: Study more graph theory! We already have a Berger
+//	table generator (rather improvised and slow but general) just
+//	haven't figured out a fairer way of distributing colors yet. It
+//	might be best to make sure that 1. everybody has approximately
+//	the same number of whites and blacks and that 2. nobody has
+//	three colors in a row -- and then simply shuffle the tids. Of course
+//	what I'm secretly dreaming about (if only the underlying maths
+//	permit it!) and what the purpose of all the digression was, is to
+//	allow us to specify a list of constraints on the pairing generator
+//	which would allow for more interesting variation in the matchups.
+//	Somebody who soon has to play black in an important game could
+//	wish to have all blacks in his club tournament the weekend before.
+//	Also the tournament director could wish to pair the strongest
+//	players last, or maybe in an extra round, so everyone can watch.
+
+// TODO: Do we need to add another abstraction? In addition to the
+//	pid (e.g. the database player-id, or FIDE registration number, etc.)
+//	we need a tid, a tournament id. This way we can easily shuffle the
+//	players and that way use the simple Berger tables (as e.g. printed
+//	in the arbiter's manual). For now...
+
 // TODO: Rename the concept of a player to the concept of a name, because
 //	that is really what this is: a string table, i.e. a mapping of name-ids to name-strings.
 //	A player is more than a name. A player has e.g. a rating and a sequence of matches.
@@ -69,6 +90,8 @@ export class Matches
 		this.pd = [];		// players dict
 		for (let i = 0; i < this.pa.length; ++i)
 		{
+			// TODO: It might have been smarter to store the player's
+			//	pa index i rather than their name.
 			// TODO: Maybe just renormalize? Assign consecutive
 			//	integers 1, 2, ... as pids ? Checking for pid inclusion
 			//	could be done with ranges rather than with find().
@@ -96,6 +119,32 @@ export class Matches
 	get activePlayerCount() { return this.pa.length - this.dropouts.length; }
 
 	get matchesCount() { return this.ma.length; }
+
+	getHighestPid()
+	{
+		const pid = parseInt(Object.keys(this.pd).reduce(
+			(k1, k2) => k1 > k2 ? k1 : k2)
+		);
+		console.assert(this.pd[pid + 1] === undefined);
+		return pid;
+	}
+
+	hasPlayer(pid) { return pid in this.pd }
+
+	addPlayer(name)
+	{
+		const pid = this.getHighestPid() + 1;
+		this.pa.push([pid, name]);
+		this.pd[pid] = name;
+		return pid;
+	}
+
+	removePlayer(pid)
+	{
+		if (!this.hasPlayer(pid)) return;
+		const p = this.pa.find(p => p[0] == pid);
+		console.log(p);
+	}
 
 	clearMatches()
 	{

@@ -9,11 +9,9 @@ export class Row
 		console.assert(this.element.nodeName == "DIV");
 	}
 	
-	static create(index)
+	static create(index, autostyle = true)
 	{
 		const div = document.createElement("div");
-		div.classList.add("inset");
-		div.classList.add("row");
 		
 		const label = document.createElement("label");
 		label.innerText = `#${index}`;
@@ -25,6 +23,20 @@ export class Row
 		input.setAttribute("type", "text");
 		input.setAttribute("placeholder", `Spieler ${index}`);
 		div.append(input);
+		
+		if (autostyle)
+		{
+			div.style.display = "flex";
+			div.style.flexFlow = "row nowrap";
+			div.style.justifyContent = "flex-start";
+			div.style.alignItems = "flex-end";
+			div.style.padding = ".3em";
+			
+			label.style.width = "3em";
+			label.style.color = "lightgrey";
+			
+			input.style.width = "100%";
+		}
 		
 		return new Row(div);
 	}
@@ -124,6 +136,12 @@ export class Form
 		this.element.removeChild(row.element);
 	}
 	
+	hide(parent = false)
+	{
+		const style = parent ? this.element.parentNode.style : this.element.style;
+		style.display = "none";
+	}
+	
 	add()
 	{
 		const row = Row.create(this.count + 1);
@@ -142,8 +160,22 @@ export class Form
 	{
 		for (const row of this.rows)
 			if (row.empty)
-				this.remove(row);
+			{
+				if (!this.onremove || row.isLast || !this.onremove(row))
+					this.remove(row);
+			}
 		this.reindex();
+	}
+	
+	shuffle()
+	{
+	}
+	
+	commit()
+	{
+		if (this.focus) this.focus.input.blur();
+		this.renormalize();
+		if (this.oncommit) this.oncommit(this);
 	}
 	
 	onRowFocus(row, e) { this.focus = row; }
@@ -173,7 +205,8 @@ export class Form
 			if (prev)
 			{
 				e.preventDefault();
-				this.remove(row);
+				if (!this.onremove || row.isLast || !this.onremove(row))
+					this.remove(row);
 				if (!prev.isLast) this.reindex();
 				prev.focus();
 			}
@@ -184,11 +217,7 @@ export class Form
 	{
 		e.preventDefault();
 		if (e.ctrlKey)
-		{
-			row.input.blur();
-			this.renormalize();
-			this.oncommit(this);
-		}
+			this.commit();
 		else if (this.count > row.index && row.next)
 			row.next.focus();
 		else
