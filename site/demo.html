@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="icon" type="image/svg" href="crosshatch.svg">
+	<title>robin</title>
+	<link href="global.css" rel="stylesheet">
+</head>
+<body>
+<div id="resinfo"></div>
+<div id="tablepane"></div>
+<script src="vendor/jquery-3.6.3.min.js"></script>
+<script src="data/Blitzturnier-22-09-Tabelle.csv.js"></script>
+<script type="module">
+	import { CrossTable } from "./CrossTable.js";
+	let table = new CrossTable("#tablepane");
+	table.installEvents();
+	table.data = data;
+	table.update();
+	// data.players[0][1] = "Karpov";
+	// table.update();
+	// table.model.sortByName(true);
+	// table.update();
+	
+	import { Matches } from "./Matches.js";
+	let mm = new Matches(data);
+	
+	import { SortedMatches } from "./SortedMatches.js";
+	let sm = new SortedMatches(mm);
+	
+	// import { berger } from "./berger.js";
+	// for (let i=0; i<20; ++i)
+	//	console.log(i, berger(i));
+</script>
+</body>
+</html>

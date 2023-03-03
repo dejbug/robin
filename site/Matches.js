@@ -73,7 +73,7 @@ export class MatchInfo
 
 export class Matches
 {
-	constructor(json)
+	constructor()
 	{
 		this.dropouts = [];
 		
@@ -82,20 +82,18 @@ export class Matches
 		
 		this.ma = [];
 		this.md = {};
-		
-		this.json = json;
 	}
 
-	get json() { return JSON.stringify({ players: this.pa, matches: this.ma}) }
-
-	set json(json)
+	set data(data)
 	{
 		this.dropouts = [];
-		const data = JSON.parse(json);
-		// console.info(json, data);
 		this.setPlayers(data.players);
 		this.setMatches(data.matches);
 	}
+
+	set json(json) { this.data = JSON.parse(json) }
+
+	get json() { return JSON.stringify({ players: this.pa, matches: this.ma}) }
 
 	setPlayers(players)
 	{

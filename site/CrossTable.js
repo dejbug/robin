@@ -112,6 +112,22 @@ export class CrossTable
 
 	setData(data) { return this.model = new SortedMatches(new Matches(data)); }
 
+	set data(data)
+	{
+		const matches = new Matches();
+		matches.data = data;
+		this.model = new SortedMatches(matches);
+		return this.model;
+	}
+
+	set json(json)
+	{
+		const matches = new Matches();
+		matches.json = json;
+		this.model = new SortedMatches(matches);
+		return this.model;
+	}
+	
 	loadFromLocalStorage()
 	{
 		const pj = localStorage.players || "[]";
@@ -126,9 +142,9 @@ export class CrossTable
 		} catch (e) {
 			console.error(e);
 		}
-		const json = JSON.stringify(data);
+		// const json = JSON.stringify(data);
 		// console.log(json);
-		return this.setData(json);
+		return this.data = data;
 	}
 
 	saveToLocalStorage()

@@ -236,6 +236,11 @@ export class Form
 			this.focus.prev.focus();
 		else if (k == 40 && !this.focus.isLast)
 			this.focus.next.focus();
+		else if (e.key == "Delete" && e.altKey)
+		{
+			delete localStorage.players;
+			delete localStorage.matches;
+		}
 	}
 	
 	onRowEscape(row, e) { row.input.value = "" }
