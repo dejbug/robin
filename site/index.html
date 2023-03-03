@@ -63,7 +63,7 @@
 <script type="module">
 // import { Matches } from "./Matches.js";
 import { CrossTable } from "./CrossTable.js";
-import { PairingsTable } from "./PairingsTable.js";
+// import { PairingsTable } from "./PairingsTable.js";
 import * as pif from "./PlayersInputForm.js";
 
 // resetLocalStorage();
@@ -83,7 +83,7 @@ table.onmatchupdate = (row, col, m) => {
 table.installEvents();
 table.loadFromLocalStorage();
 
-const pt = new PairingsTable("pairings", table);
+// const pt = new PairingsTable("pairings", table);
 // pt.show();
 
 const form = new pif.Form("form");
