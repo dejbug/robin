@@ -116,6 +116,16 @@ form.onshuffle = map => {
 // const submit = document.querySelector("#form ~ div > input");
 // const submit = document.querySelector('input[type="button"][value="start"]');
 document.querySelector("#start").onclick = e => { form.commit() };
+
+window.addEventListener("keydown", e => {
+	if (e.key == "F1")
+	{
+		e.preventDefault();
+		e.stopPropagation();
+		// console.log(e);
+		console.log(table.model.toCsv());
+	}
+});
 </script>
 </body>
 </html>

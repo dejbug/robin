@@ -1,4 +1,5 @@
 import { strCmp, keys } from "./tools.js";
+import { Match } from "./Match.js";
 
 // TODO: This class is a misnomer. It's not the matches that are sorted.
 //	It's the model which is extended by a sorting capability. Maybe
@@ -298,5 +299,50 @@ export class SortedMatches
 				ii[row] = index++;
 		}
 		return ii;
+	}
+
+	translatePlayerScores(scores)
+	{
+		const ss = {};
+		for (const pid in scores)
+			ss[this.pid2row[pid]] = scores[pid];
+		return ss;
+	}
+
+	toCsv(identitySymbol = "=")
+	{
+		let csv = "";
+		let row = "#,Name,";
+		for (let i = 1; i <= this.matches.playerCount; ++i)
+			row += `${i},`;
+		row += "Punkte";
+		csv += row + "\n";
+		for (let i = 1; i <= this.matches.playerCount; ++i)
+		{
+			const pid = this.row2pid[i];
+			const name = this.matches.pd[pid];
+			let points = 0;
+			row = `${i},${name}`;
+			for (let j = 1; j <= this.matches.playerCount; ++j)
+			{
+				if (i == j)
+				{
+					row += `,${identitySymbol}`;
+					continue;
+				}
+				const oid = this.row2pid[j];
+				const m = this.matches.getMatch(pid, oid);
+				const result = Match.getResultForPlayer(m, pid);
+				if (result == undefined)
+				{
+					row += ",";
+					continue;
+				}
+				points += result;
+				row += `,${result}`;
+			}
+			csv += row + `,${points}\n`;
+		}
+		return csv;
 	}
 }

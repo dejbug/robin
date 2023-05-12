@@ -26,6 +26,7 @@
 //	A player is more than a name. A player has e.g. a rating and a sequence of matches.
 
 import { scoreToString } from "./tools.js";
+import { Match } from "./Match.js";
 
 const madd = (d, w, b, i) => {
 	if (!(w in d)) d[w] = {};
@@ -396,5 +397,44 @@ export class Matches
 		const m = this.getMatchByIndex(i);
 		if (m === null || m === undefined) return null;
 		return new MatchInfo(m);
+	}
+
+	getPlayerName(pid) { return this.pd[pid] }
+
+	getPlayerMatches(pid) { return this.ma.filter(m => m[0] == pid || m[1] == pid) }
+
+	getPlayerScores(pid)
+	{
+		const matches = this.getPlayerMatches(pid);
+		// return matches.map(m => Match.getResultForPlayer(m, pid));
+		const ss = {};
+		for (const m of matches)
+		{
+			const oid = Match.getOpponentForPlayer(m, pid);
+			ss[oid] = Match.getResultForPlayer(m, pid);
+		}
+		return ss;
+	}
+
+	getPlayerColors(pid)
+	{
+		// TODO: We distinguish between user-set colors (controlled
+		//	by the user's choice of target cell when entering a score)
+		//	and Berger table colors.
+		throw new Error("nyi");
+	}
+
+	getPlayerBergerColors(pid)
+	{
+		// TODO: See: getPlayerColors.
+		throw new Error("nyi");
+	}
+
+	getPlayerInfo(pid)
+	{
+		const name = this.getPlayerName(pid);
+		const matches = this.getPlayerMatches(pid);
+		const scores = this.getPlayerScores(pid);
+		return { pid, name, matches, scores };
 	}
 }
