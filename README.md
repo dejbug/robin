@@ -1,6 +1,6 @@
 # robin
 
-A hopefully usable [prototype](https://raw.githack.com/dejbug/robin/10f94f5/site/index.html).
+A hopefully usable [prototype](https://dejbug.github.io/robin/).
 
 See the last [good](https://raw.githack.com/dejbug/robin/da00b65/site/demo.html) (or [current](https://raw.githack.com/dejbug/robin/main/site/demo.html)) demo.
 
