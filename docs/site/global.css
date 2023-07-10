@@ -1,0 +1,68 @@
+table { border-collapse: collapse; cursor: pointer; user-select: none; font-family: sans; }
+table, th, td { border: 1px solid grey; padding: .3em; }
+table { border-collapse: collapse; font-size: 10pt; }
+th, td { padding: 5px; min-width: 2em; text-align: center; }
+table > tr > td:nth-child(1) { font-weight: bold; }
+table > tr > td:nth-child(2) { font-family: serif; }
+
+.data-cc-highlight-match { background-color: pink !important; }
+.data-cc-highlight-player { background-color: #eee; }
+.data-cc-highlight-round-white { background-color: #ffcc66; font-weight: bold; }
+.data-cc-highlight-round-black { background-color: #8e5925; color: white; font-weight: bold; }
+.data-cc-highlight-round-desk { background-color: paleturquoise; font-weight: bold; }
+.data-cc-highlight-round-index { color: crimson; }
+.data-cc-highlight-round-index.data-cc-dropout { color: crimson !important; }
+
+.data-cc-dropout, .data-cc-dropout.crosshatch {
+	background-color: white; color: transparent;
+	background-image: url(crossthrough.svg);
+	background-size: 1em; background-repeat: round;
+	border: none;
+}
+tr:nth-child(1) .data-cc-dropout { color: grey; }
+tr.data-cc-dropout td:nth-child(1) { color: grey; }
+tr.data-cc-dropout td:nth-child(2) { color: grey; }
+td.data-cc-side-b.data-cc-dropout::after { color: transparent; }
+
+.data-cc-celltype-inert { cursor: not-allowed; }
+.data-cc-celltype-sortable { cursor: ns-resize; }
+.data-cc-celltype-player { cursor: pointer; }
+.data-cc-celltype-cell { cursor: cell; }
+
+td.data-cc-side-b { position: relative; background-clip: padding-box; }
+td.data-cc-side-b::after {
+	content: "s";
+	color: grey;
+	font-size: 60%;
+	position: absolute;
+	left: 3.7em;
+	top: 1.9em;
+}
+
+.data-cc-resort { text-decoration: underline; }
+
+.crosshatch { background-image: url(crosshatch.svg); }
+
+#resinfo {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	color: grey;
+	font-size: 2vh;
+}
+
+@media (max-width: 639px) {
+	#resinfo::after { content: "0-640"; }
+}
+@media (min-width: 640px) and (max-width: 799px) {
+	#resinfo::after { content: "640-800"; }
+}
+@media (min-width: 800px) and (max-width: 1023px) {
+	#resinfo::after { content: "800-1024"; }
+}
+@media (min-width: 1024px) and (max-width: 1199px) {
+	#resinfo::after { content: "1024-1200"; }
+}
+@media (min-width: 1200px) {
+	#resinfo::after { content: "1200-max"; }
+}
