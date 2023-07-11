@@ -114,8 +114,9 @@ export class Form
 	
 	load(data)
 	{
+		for (const row of this.rows)
+			this.remove(row);
 		data = typeof data == "string" ? JSON.parse(data) : data;
-		let row = undefined;
 		for (const item of data)
 		{
 			const text = item[1].trim()
@@ -124,7 +125,6 @@ export class Form
 			row.text = text;
 			this.append(row);
 		}
-		if (row) row.focus();
 	}
 	
 	oncommit() 	{ console.log(this.rows.map(r => r.text)) }
@@ -191,7 +191,7 @@ export class Form
 	
 	renormalize()
 	{
-		// FIXME: We have to renormalize otherwise our current
+		// FIXME: We have to renormalize, otherwise our current
 		//	CrossTable implementation (or its composite helpers)
 		//	will get confused. In particular, if memory serves, we
 		//	occasionally assume that playerCount is the highest pid.
@@ -203,7 +203,7 @@ export class Form
 		for (const row of this.rows)
 			if (row.empty)
 			{
-				if (!this.onremove || row.isLast || !this.onremove(row))
+				if (row.isLast || !this.onremove || !this.onremove(row))
 					this.remove(row);
 			}
 		this.reindex();

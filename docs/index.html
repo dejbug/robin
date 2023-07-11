@@ -13,6 +13,7 @@
 .flex.end { justify-content: flex-end; }
 .padded { padding: .3em; }
 .offset { margin: .3em; }
+.ml-1 { margin-left: 1em }
 .box { border: thin solid grey; }
 .box.blue { border-color: blue !important; }
 .box.red { border-color: red !important; }
@@ -48,7 +49,8 @@
 <div>
 	<div id="form" class="col offset padded"></div>
 	<div class="offset padded flex end">
-		<input id="start" type="button" value="start"></input>
+		<input id="reset" type="button" value="reset"></input>
+		<input id="start" type="button" value="start" class="ml-1"></input>
 	</div>
 </div>
 <div id="crosstable"></div>
@@ -65,14 +67,6 @@
 import { CrossTable } from "./CrossTable.js";
 // import { PairingsTable } from "./PairingsTable.js";
 import * as pif from "./PlayersInputForm.js";
-
-// resetLocalStorage();
-
-function resetLocalStorage()
-{
-	delete localStorage.players;
-	delete localStorage.matches;
-}
 
 const table = new CrossTable("#crosstable");
 table.onmatchupdate = (row, col, m) => {
@@ -113,9 +107,21 @@ form.onremove = row => {
 form.onshuffle = map => {
 	console.log("onshuffle", map);
 };
-// const submit = document.querySelector("#form ~ div > input");
-// const submit = document.querySelector('input[type="button"][value="start"]');
+
+function resetLocalStorage()
+{
+	delete localStorage.players;
+	delete localStorage.matches;
+}
+
 document.querySelector("#start").onclick = e => { form.commit() };
+document.querySelector("#reset").onclick = e => {
+	resetLocalStorage();
+	table.loadFromLocalStorage();
+	form.load(table.model.matches.pa);
+	form.add();
+};
+
 </script>
 </body>
 </html>

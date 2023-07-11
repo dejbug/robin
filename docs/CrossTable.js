@@ -138,7 +138,7 @@ export class CrossTable
 		try {
 			data.players = JSON.parse(pj);
 			data.matches = JSON.parse(mj);
-			// console.info("data", data);
+			console.info("data", data);
 		} catch (e) {
 			console.error(e);
 		}
