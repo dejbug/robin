@@ -2,7 +2,7 @@ import unittest
 
 import circle
 
-class TestCircleMethod(unittest.TestCase):
+class TestCircle(unittest.TestCase):
 
 	def test_seed_lengths(self):
 		self.assertEqual(len(circle.seed(0)), 0)

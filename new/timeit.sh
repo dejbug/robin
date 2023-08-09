@@ -1,0 +1,1 @@
+python -m timeit -n 100 'import berger; berger.table(100)'
