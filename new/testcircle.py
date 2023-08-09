@@ -20,10 +20,8 @@ class TestCircle(unittest.TestCase):
 			with self.subTest(
 					oddPlayersCount = oddPlayersCount,
 					evenPlayersCount = evenPlayersCount):
-				oddCircle = circle.seed(oddPlayersCount)
-				evenCircle = circle.seed(evenPlayersCount)
-				evenCircleRounds = circle.rounds(evenCircle)
-				oddCircleRounds = circle.rounds(oddCircle)
+				evenCircleRounds = circle.rounds(evenPlayersCount)
+				oddCircleRounds = circle.rounds(oddPlayersCount)
 				self.assertEqual(evenCircleRounds, oddCircleRounds)
 
 	def test_full_cycles(self):
@@ -67,6 +65,17 @@ class TestCircle(unittest.TestCase):
 				for state in states:
 					c = circle.rotate(c, clockwise)
 					self.assertEqual(c, state)
+
+
+class TestHacks(unittest.TestCase):
+
+	def test_pairingsCountMath(self):
+		for playersCount in range(1, 1001):
+			playersCount += playersCount % 2
+			gamesCount = (playersCount - 1) * playersCount // 2
+			with self.subTest(playersCount = playersCount, gamesCount = gamesCount):
+				result = circle.playersCountFromPairings(range(gamesCount))
+				self.assertEqual(playersCount, result)
 
 
 if __name__ == '__main__':

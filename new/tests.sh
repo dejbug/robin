@@ -1,1 +1,1 @@
-python -m unittest -v
+python -m unittest -v $*

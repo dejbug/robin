@@ -39,13 +39,8 @@ def table(playersCount):
 	return table
 
 
-def main():
+if __name__ == '__main__':
 	from pprint import pprint
-
 	for playersCount in range(1, 16):
 		pprint(table(playersCount))
 		print('-' * 79)
-
-
-if __name__ == '__main__':
-	exit(main())
