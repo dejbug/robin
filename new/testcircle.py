@@ -36,35 +36,25 @@ class TestCircle(unittest.TestCase):
 					self.assertEqual(circle.seed(playersCount), c)
 
 	def test_rotate_4(self):
+		states = (
+			(
+				(1, 2, 3, 4),
+				(1, 3, 4, 2),
+				(1, 4, 2, 3),
+				(1, 2, 3, 4),
+			),
+			(
+				(1, 2, 3, 4),
+				(1, 4, 2, 3),
+				(1, 3, 4, 2),
+				(1, 2, 3, 4),
+			),
+		)
 		cases = (
-			( 3, True, (
-					(1, 2, 3, 0),
-					(1, 0, 2, 3),
-					(1, 3, 0, 2),
-					(1, 2, 3, 0),
-				)
-			),
-			( 3, False, (
-					(1, 2, 3, 0),
-					(1, 3, 0, 2),
-					(1, 0, 2, 3),
-					(1, 2, 3, 0),
-				)
-			),
-			( 4, True, (
-					(1, 2, 3, 4),
-					(1, 4, 2, 3),
-					(1, 3, 4, 2),
-					(1, 2, 3, 4),
-				)
-			),
-			( 4, False, (
-					(1, 2, 3, 4),
-					(1, 3, 4, 2),
-					(1, 4, 2, 3),
-					(1, 2, 3, 4),
-				)
-			),
+			( 3, False, states[False] ),
+			( 3, True, states[True] ),
+			( 4, False, states[False] ),
+			( 4, True, states[True] ),
 		)
 		for case in cases:
 			playersCount, clockwise, states = case
